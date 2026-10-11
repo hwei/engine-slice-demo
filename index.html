@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>发动机装回去 · 白模切片</title>
+<style>
+*{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#1d2126;color:#eee;font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+#hud{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#14171a;font-size:15px;flex:none}
+#hud b{color:#ffd166}
+#view{position:relative;flex:1 1 60%;touch-action:none}
+#view canvas{display:block;width:100%;height:100%}
+#views{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+#views button{font-size:12px;padding:6px 8px;border-radius:6px;border:1px solid #556;background:#2a3038cc;color:#ddd}
+#toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);max-width:78%;padding:8px 12px;border-radius:8px;background:#000c;font-size:14px;line-height:1.4;text-align:center;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:1}#toast.bad{border:1px solid #ff6b6b}#toast.good{border:1px solid #6bdc8b}#toast.info{border:1px solid #ffd166}
+#legend{position:absolute;left:8px;bottom:6px;font-size:11px;color:#9aa;line-height:1.5;pointer-events:none}
+#ignite{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font-size:20px;padding:12px 30px;border-radius:30px;border:none;background:#e63946;color:#fff;font-weight:bold;display:none;box-shadow:0 0 18px #e6394688}
+#rpm{position:absolute;left:50%;top:60px;transform:translateX(-50%);background:#000b;padding:8px 18px;border-radius:10px;text-align:center;display:none;pointer-events:none}
+#rpm .n{font-size:38px;font-weight:bold;color:#6bdc8b;text-shadow:0 2px 6px #000}#rpm .t{font-size:20px;color:#fff;font-weight:bold}
+#bottom{flex:none;height:40%;max-height:330px;display:flex;flex-direction:column;background:#22272d;border-top:2px solid #333}
+#beltlabel{font-size:12px;color:#9aa;padding:6px 12px 0;display:flex;justify-content:space-between}
+#belt{position:relative;height:118px;margin:6px 0;overflow:hidden;background:repeating-linear-gradient(90deg,#30353c 0 22px,#2a2f35 22px 44px);border-top:3px solid #444;border-bottom:3px solid #444;touch-action:none}
+#belt.paused{outline:2px solid #ffd166}
+.card{position:absolute;top:9px;width:92px;height:96px;border-radius:10px;background:#3b424b;border:2px solid #59626d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;text-align:center;touch-action:none}
+.card .ic{width:62px;height:56px}
+.card.dragging{opacity:.25}
+#ghost{position:fixed;width:84px;height:84px;margin:-42px 0 0 -42px;pointer-events:none;display:none;z-index:9;border-radius:12px;background:#3b424bdd;border:2px solid #ffd166}
+#ghost .ic{width:100%;height:100%}
+#trash{margin:4px auto 0;width:70%;height:54px;border:2px dashed #777;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#aaa}
+#trash.hot{border-color:#ff6b6b;color:#ff6b6b;background:#ff6b6b22}
+</style></head><body>
+<div id="app">
+ <div id="hud"><span>⏱ <b id="time">0.0</b>s</span><span>任务：把发动机装回去</span><span>已装 <b id="prog">0/9</b></span></div>
+ <div id="view">
+  <div id="views"><button data-v="0">斜俯视</button><button data-v="1">正时端</button><button data-v="2">进气侧</button></div>
+  <div id="toast"></div>
+  <div id="legend">单指拖动空白处可转视角</div>
+  <div id="rpm"><div class="n" id="rpmn">0 rpm</div><div class="t" id="rpmt"></div></div>
+  <button id="ignite">🔑 点火</button>
+ </div>
+ <div id="bottom">
+  <div id="beltlabel"><span>零件传送带（按住暂停）</span><span id="beltstate">▶ 运行中</span></div>
+  <div id="belt"></div>
+  <div id="trash">🗑 多余零件拖到这里</div>
+ </div>
+</div>
+<div id="ghost"></div>
+<script src="three.min.js"></script>
+<script>
+// ---------- 零件定义 ----------
+// 坐标：X 沿曲轴（四缸一排），+X = 正时端；+Y 向上；-Z 进气侧（后），+Z 排气侧（前）
+const PARTS = {
+ head:  {name:'缸盖', color:'#c9ccd1'},
+ cam:   {name:'凸轮轴', color:'#d9b26f'},
+ belt:  {name:'正时皮带', color:'#333'},
+ plug:  {name:'火花塞', color:'#e8e8e8'},
+ coil:  {name:'点火线圈', color:'#d04848'},
+ intake:{name:'进气歧管', color:'#6f8fb8'},
+ banana:{name:'香蕉', color:'#f3d34a', fake:'obvious', quip:'香蕉不能当密封垫……它只会在缸盖里烤熟。'},
+ duck:  {name:'玩具鸭', color:'#ffcf33', fake:'obvious', quip:'小黄鸭进不了燃烧室，它会被压扁。'},
+ longplug:{name:'火花塞(长)', color:'#bbb', fake:'real', quip:'这根火花塞太长：伸进燃烧室会被活塞撞上，打坏电极甚至活塞。'},
+};
+// 安装位
+const SLOTS = [
+ {id:'head', part:'head', pos:[0,1.15,0], needs:[]},
+ {id:'cam', part:'cam', pos:[0,1.82,-0.42], needs:['head']},
+ {id:'intake', part:'intake', pos:[0,1.2,-1.05], needs:['head'], },
+ {id:'p1', part:'plug', pos:[-1.2,1.58,0.15], needs:['head']},
+ {id:'p2', part:'plug', pos:[-0.4,1.58,0.15], needs:['head']},
+ {id:'p3', part:'plug', pos:[0.4,1.58,0.15], needs:['head']},
+ {id:'p4', part:'plug', pos:[1.2,1.58,0.15], needs:['head']},
+ {id:'coil', part:'coil', pos:[0,1.86,0.15], needs:['p1','p2','p3','p4']},
+ {id:'belt', part:'belt', pos:[2.05,0.75,-0.2], needs:['cam']},
+];
+const HINTS = { // 位置未解锁时的提示
+ cam:'先装缸盖：凸轮轴是架在缸盖上的。', intake:'先装缸盖：进气歧管要拧在缸盖进气口上。',
+ p1:'先装缸盖：火花塞孔在缸盖上。',p2:'先装缸盖：火花塞孔在缸盖上。',p3:'先装缸盖：火花塞孔在缸盖上。',p4:'先装缸盖：火花塞孔在缸盖上。',
+ coil:'先把 4 个火花塞都拧上，线圈要压在火花塞头上。', belt:'先装凸轮轴：皮带要套住曲轴轮和凸轮轴轮。'};
+const WRONG = { // 真零件放错位置的原理句
+ plug:'火花塞要拧进缸盖顶上那排孔里，每缸一个。',
+ coil:'点火线圈压在火花塞头上，给它供高压电。',
+ belt:'正时皮带在发动机侧面（正时端），连曲轴和凸轮轴。',
+ cam:'凸轮轴横躺在缸盖上，沿四个缸一字排开。',
+ intake:'进气歧管装在后侧（进气侧），排气在前侧。',
+ head:'缸盖要盖在缸体正上方。'};
+const TOTAL = SLOTS.length;
+
+// ---------- Three 场景 ----------
+const view=document.getElementById('view');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+view.prepend(renderer.domElement);
+const scene=new THREE.Scene(); scene.background=new THREE.Color('#2b3036');
+const camera=new THREE.PerspectiveCamera(40,1,0.1,100);
+scene.add(new THREE.HemisphereLight(0xffffff,0x445566,0.9));
+const dl=new THREE.DirectionalLight(0xffffff,0.8); dl.position.set(4,8,6); scene.add(dl);
+const engine=new THREE.Group(); scene.add(engine);
+const mat=c=>new THREE.MeshLambertMaterial({color:c});
+const ground=new THREE.Mesh(new THREE.BoxGeometry(7,0.1,4),mat('#3a4048')); ground.position.y=-0.95; scene.add(ground);
+
+// 预装：缸体 + 油底壳 + 曲轴轮 + 排气歧管（标出排气侧）
+function box(w,h,d,c){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));}
+function cyl(r,h,c,seg=20){return new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,seg),mat(c));}
+const block=box(3.6,1.4,1.6,'#9aa0a8'); block.position.y=0.2; engine.add(block);
+for(let i=0;i<4;i++){const b=cyl(0.33,0.02,'#555'); b.position.set(-1.2+0.8*i,0.91,0.15); engine.add(b);} // 气缸口
+const pan=box(3.3,0.4,1.4,'#7d838b'); pan.position.y=-0.7; engine.add(pan);
+const crank=cyl(0.32,0.15,'#666'); crank.rotation.z=Math.PI/2; crank.position.set(1.88,-0.2,-0.2); engine.add(crank);
+const markCrank=box(0.04,0.08,0.06,'#444'); markCrank.position.set(1.97,0.12,-0.2); engine.add(markCrank);
+const exh=new THREE.Group(); for(let i=0;i<4;i++){const p=box(0.2,0.2,0.5,'#8a5a3c');p.position.set(-1.2+0.8*i,1.15,1.05);exh.add(p);} const ec=box(2.8,0.25,0.25,'#8a5a3c');ec.position.set(0,0.85,1.3);exh.add(ec); engine.add(exh);
+// 标签精灵
+function label(txt,pos,col='#ffffff'){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.font='bold 30px sans-serif';g.fillStyle=col;g.textAlign='center';g.fillText(txt,128,42);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.renderOrder=10;s.scale.set(1.4,0.35,1);s.position.set(...pos);scene.add(s);return s;}
+label('排气侧',[0,0.4,2.0],'#e0a070');label('进气侧',[0,0.4,-2.0],'#8fb0e0');label('正时端',[2.9,0.6,-0.2],'#ffd166');
+
+// 零件网格
+function makePart(type){const g=new THREE.Group();
+ switch(type){
+  case 'head':{const m=box(3.6,0.5,1.6,'#c9ccd1');g.add(m);for(let i=0;i<4;i++){const h=cyl(0.1,0.02,'#333');h.position.set(-1.2+0.8*i,0.26,0.15);g.add(h);}const cp=cyl(0.3,0.12,'#bbb');cp.rotation.z=Math.PI/2;cp.position.set(1.88,0.15,-0.2);g.add(cp);const mk=box(0.04,0.08,0.06,'#444');mk.position.set(1.95,0.47,-0.2);g.add(mk);g.userData.camPulleyMark=mk;break;}
+  case 'cam':{const s=cyl(0.09,3.3,'#d9b26f');s.rotation.z=Math.PI/2;g.add(s);for(let i=0;i<8;i++){const l=box(0.12,0.26,0.16,'#c49a52');l.position.set(-1.4+0.4*i,0,0);g.add(l);}break;}
+  case 'plug':{const b=cyl(0.07,0.35,'#e8e8e8');b.position.y=0.05;g.add(b);const t=cyl(0.1,0.12,'#999',6);t.position.y=-0.12;g.add(t);break;}
+  case 'longplug':{const b=cyl(0.07,0.75,'#bbb');g.add(b);const t=cyl(0.1,0.12,'#999',6);g.add(t);break;}
+  case 'coil':{const r=box(3.0,0.22,0.35,'#d04848');g.add(r);for(let i=0;i<4;i++){const n=cyl(0.09,0.22,'#222');n.position.set(-1.2+0.8*i,-0.18,0);g.add(n);}break;}
+  case 'intake':{const pl=box(3.0,0.55,0.35,'#6f8fb8');pl.position.z=-0.25;g.add(pl);for(let i=0;i<4;i++){const r=box(0.22,0.22,0.5,'#6f8fb8');r.position.set(-1.2+0.8*i,-0.1,0.15);g.add(r);}const th=cyl(0.2,0.3,'#555');th.rotation.z=Math.PI/2;th.position.set(-1.65,0,-0.25);g.add(th);break;}
+  case 'belt':{const shape=new THREE.Shape();const w=0.36,h0=-0.95,h1=1.1;shape.absarc(0,h0,w,Math.PI,0,false);shape.absarc(0,h1,w,0,Math.PI,false);const hole=new THREE.Path();hole.absarc(0,h0,w-0.08,Math.PI,0,false);hole.absarc(0,h1,w-0.08,0,Math.PI,false);shape.holes.push(hole);const m=new THREE.Mesh(new THREE.ExtrudeGeometry(shape,{depth:0.12,bevelEnabled:false}),mat('#2a2a2a'));m.rotation.y=Math.PI/2;g.add(m);break;}
+  case 'banana':{const m=new THREE.Mesh(new THREE.TorusGeometry(0.4,0.1,8,16,Math.PI*0.8),mat('#f3d34a'));g.add(m);break;}
+  case 'duck':{const b=new THREE.Mesh(new THREE.SphereGeometry(0.3,16,12),mat('#ffcf33'));g.add(b);const h=new THREE.Mesh(new THREE.SphereGeometry(0.18,16,12),mat('#ffcf33'));h.position.set(0.2,0.3,0);g.add(h);break;}
+ } return g;}
+
+// 幽灵高亮（拖拽时显示可装位）
+const slotState={}; SLOTS.forEach(s=>slotState[s.id]={done:false});
+const ghosts={};
+SLOTS.forEach(s=>{const m=makePart(s.part);m.traverse(o=>{if(o.isMesh)o.material=new THREE.MeshBasicMaterial({color:'#6bdc8b',transparent:true,opacity:0.35,depthWrite:false});});m.position.set(...s.pos);m.visible=false;engine.add(m);ghosts[s.id]=m;});
+const unlocked=s=>s.needs.every(n=>slotState[n].done);
+
+// 相机
+const VIEWS=[{th:0.75,ph:0.95,r:9.5},{th:1.45,ph:1.15,r:8.5},{th:-1.0,ph:1.1,r:9}];
+let cam={th:0.75,ph:0.95,r:9.5},camT={...cam};
+function setView(i){camT={...VIEWS[i]};}
+document.querySelectorAll('#views button').forEach(b=>b.onclick=()=>setView(+b.dataset.v));
+function updCam(){for(const k in cam)cam[k]+=(camT[k]-cam[k])*0.15;camera.position.set(cam.r*Math.sin(cam.ph)*Math.sin(cam.th),0.6+cam.r*Math.cos(cam.ph),cam.r*Math.sin(cam.ph)*Math.cos(cam.th));camera.lookAt(0,0.6,0);}
+function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?52:40;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);
+// 单指旋转（只在 3D 区空白处）
+let orbit=null;
+view.addEventListener('pointerdown',e=>{if(e.target!==renderer.domElement||ignited)return;orbit={x:e.clientX,y:e.clientY};});
+addEventListener('pointermove',e=>{if(!orbit)return;camT.th-=(e.clientX-orbit.x)*0.01;camT.ph=Math.min(1.45,Math.max(0.3,camT.ph-(e.clientY-orbit.y)*0.008));orbit={x:e.clientX,y:e.clientY};});
+addEventListener('pointerup',()=>orbit=null);
+
+// ---------- 传送带 ----------
+const beltEl=document.getElementById('belt'); let beltItems=[];
+const POOL=['head','plug','banana','cam','plug','intake','plug','duck','coil','plug','longplug','belt'];// 约 1/4 是干扰件
+const icons={};
+function iconFor(type){ // 用离屏渲染给每种零件生成小图
+ if(icons[type])return icons[type];
+ const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r.setSize(124,112);
+ const s=new THREE.Scene();s.add(new THREE.HemisphereLight(0xffffff,0x445566,1));const d=new THREE.DirectionalLight(0xffffff,0.7);d.position.set(3,5,4);s.add(d);
+ const m=makePart(type);s.add(m);const bb=new THREE.Box3().setFromObject(m);const size=bb.getSize(new THREE.Vector3()).length();const c=bb.getCenter(new THREE.Vector3());m.position.sub(c);
+ const cm=new THREE.PerspectiveCamera(35,124/112,0.1,100);cm.position.set(size*0.9,size*0.7,size*1.2);cm.lookAt(0,0,0);r.render(s,cm);
+ icons[type]=r.domElement.toDataURL();r.dispose();return icons[type];}
+const CARD_W=104; let beltOffset=0, beltSpeed=40, paused=false, slow=false;
+function buildBelt(){beltEl.innerHTML='';beltItems=[];
+ const remainingReal={};SLOTS.forEach(s=>{if(!slotState[s.id].done)remainingReal[s.part]=(remainingReal[s.part]||0)+1;});
+ // 按 POOL 顺序生成，真件只放剩余数量，干扰件未丢弃的保留
+ const items=[];const cnt={};
+ POOL.forEach(t=>{if(PARTS[t].fake){if(!discarded[t])items.push(t);}else{cnt[t]=(cnt[t]||0)+1;if(cnt[t]<=(remainingReal[t]||0))items.push(t);}});
+ // 保证一圈至少比屏宽长，不够就补空位
+ const minN=Math.ceil(beltEl.clientWidth/CARD_W)+1;while(items.length&&items.length<minN)items.push(null);
+ items.forEach((t,i)=>{const el=document.createElement('div');el.className='card';if(t){el.innerHTML=`<img class="ic" src="${iconFor(t)}"><div>${PARTS[t].name}</div>`;el.dataset.type=t;}else el.style.visibility='hidden';beltEl.appendChild(el);beltItems.push({el,type:t,i});});
+}
+const discarded={};
+function layoutBelt(){const L=beltItems.length*CARD_W;beltItems.forEach(it=>{let x=((it.i*CARD_W+beltOffset)%L+L)%L-CARD_W;it.el.style.transform=`translateX(${x}px)`;});}
+
+// ---------- 拖拽 ----------
+const ghost=document.getElementById('ghost'),trash=document.getElementById('trash');
+let press=null, drag=null;
+beltEl.addEventListener('pointerdown',e=>{if(ignited)return;e.preventDefault();paused=true;updBeltState();const card=e.target.closest('.card');press={x:e.clientX,y:e.clientY,card,id:e.pointerId,t:performance.now()};});
+addEventListener('pointermove',e=>{
+ if(press&&!drag&&press.card&&press.card.dataset.type){const dy=press.y-e.clientY,dx=Math.abs(e.clientX-press.x);
+   if(dy>12||(dx>14&&dy>4)||Math.hypot(dx,dy)>22)startDrag(press.card,e);}
+ if(drag)moveDrag(e);});
+addEventListener('pointerup',e=>{if(drag)endDrag(e);press=null;paused=false;updBeltState();});
+addEventListener('pointercancel',()=>{if(drag)bounceBack();press=null;paused=false;updBeltState();});
+function updBeltState(){beltEl.classList.toggle('paused',paused);document.getElementById('beltstate').textContent=paused?'⏸ 已暂停':'▶ 运行中';}
+function startDrag(card,e){const type=card.dataset.type;drag={type,card};card.classList.add('dragging');ghost.innerHTML=`<img class="ic" src="${iconFor(type)}">`;ghost.style.display='block';
+ SLOTS.forEach(s=>{if(s.part===type&&!slotState[s.id].done){ghosts[s.id].visible=true;const ok=unlocked(s);ghosts[s.id].traverse(o=>{if(o.isMesh)o.material.color.set(ok?'#6bdc8b':'#ff9f43');});}});
+ if(type==='belt')showMarks(true);
+ moveDrag(e);}
+function slotScreen(s){const v=new THREE.Vector3(...s.pos).project(camera);const r=renderer.domElement.getBoundingClientRect();return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height};}
+function nearestSlot(x,y,filter){let best=null,bd=1e9;SLOTS.forEach(s=>{if(slotState[s.id].done||!filter(s))return;const p=slotScreen(s);const d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;best=s;}});return{s:best,d:bd};}
+const SNAP=58; // 吸附半径（px）
+// 手指抬高偏移：零件显示在手指上方，避免被手指挡住
+const LIFT=56;
+function moveDrag(e){const x=e.clientX,y=e.clientY-LIFT;ghost.style.left=x+'px';ghost.style.top=y+'px';drag.x=x;drag.y=y;
+ const tr=trash.getBoundingClientRect();trash.classList.toggle('hot',e.clientX>tr.left&&e.clientX<tr.right&&e.clientY>tr.top-10&&e.clientY<tr.bottom+10);
+ const n=nearestSlot(x,y,s=>s.part===drag.type&&unlocked(s));ghost.style.borderColor=n.s&&n.d<SNAP?'#6bdc8b':'#ffd166';
+ if(drag.type==='belt')markAlign(n.s&&n.d<SNAP*1.6);}
+function clearGhosts(){Object.values(ghosts).forEach(g=>g.visible=false);showMarks(false);}
+function endDrag(e){const {type,card}=drag;const x=drag.x,y=drag.y;clearGhosts();
+ const tr=trash.getBoundingClientRect();const inTrash=e.clientX>tr.left&&e.clientX<tr.right&&e.clientY>tr.top-10&&e.clientY<tr.bottom+10;
+ const vr=renderer.domElement.getBoundingClientRect();const inView=y>vr.top&&y<vr.bottom;
+ if(inTrash){ if(PARTS[type].fake){discarded[type]=true;toast(`丢掉了「${PARTS[type].name}」 👍`,'good');finishDrag();buildBelt();}
+   else{toast(`「${PARTS[type].name}」是发动机零件，可别扔！`,'bad');bounceBack();} return;}
+ if(!inView){bounceBack(true);return;}
+ if(PARTS[type].fake){shakeEngine();toast(PARTS[type].quip,'bad');bounceBack();return;}
+ const good=nearestSlot(x,y,s=>s.part===type&&unlocked(s));
+ if(good.s&&good.d<SNAP){install(good.s);finishDrag();return;}
+ const locked=nearestSlot(x,y,s=>s.part===type&&!unlocked(s));
+ if(locked.s&&locked.d<SNAP){toast('🔒 '+HINTS[locked.s.id],'info');bounceBack();return;}
+ // 放在发动机附近但位置不对
+ const any=nearestSlot(x,y,s=>true);const onEngine=any.s&&any.d<SNAP*2.2;
+ if(onEngine){shakeEngine();toast('顶住了 —— '+WRONG[type],'bad');bounceBack();return;}
+ bounceBack(true);}
+function finishDrag(){ghost.style.display='none';drag.card.classList.remove('dragging');drag=null;}
+function bounceBack(silent){const c=drag.card,r=c.getBoundingClientRect();const g=ghost;g.style.transition='left .25s ease-in,top .25s ease-in';g.style.left=(r.left+r.width/2)+'px';g.style.top=(r.top+r.height/2)+'px';const d=drag;drag=null;
+ setTimeout(()=>{g.style.transition='';g.style.display='none';d.card.classList.remove('dragging');},260);}
+
+// 安装 + 下沉动画
+const installed=[]; let doneCount=0;
+function install(s){slotState[s.id].done=true;doneCount++;const m=makePart(s.part);m.position.set(s.pos[0],s.pos[1]+0.6,s.pos[2]);engine.add(m);installed.push({m,y0:s.pos[1],t:0});
+ if(s.part==='head')headMesh=m;
+ toast(`✔ ${PARTS[s.part].name} 装好了${s.part==='belt'?'（正时记号已对齐）':''}`,'good');
+ document.getElementById('prog').textContent=doneCount+'/'+TOTAL;
+ setTimeout(buildBelt,0);
+ if(doneCount===TOTAL){finished=true;toast('全部装好！拧钥匙试试','good');document.getElementById('ignite').style.display='block';}}
+// 正时记号
+let headMesh=null;const camMarkGlow=new THREE.Mesh(new THREE.SphereGeometry(0.09),new THREE.MeshBasicMaterial({color:'#ffd166'}));camMarkGlow.position.set(1.97,1.62,-0.2);camMarkGlow.visible=false;engine.add(camMarkGlow);
+const crankMarkGlow=camMarkGlow.clone();crankMarkGlow.material=camMarkGlow.material.clone();crankMarkGlow.position.set(1.97,0.12,-0.2);engine.add(crankMarkGlow);
+function showMarks(v){camMarkGlow.visible=crankMarkGlow.visible=v;if(v){toast('正时记号亮了：把皮带对准两个黄点','info');}}
+function markAlign(ok){[camMarkGlow,crankMarkGlow].forEach(m=>m.material.color.set(ok?'#6bdc8b':'#ffd166'));}
+
+// 吐槽/原理字幕
+let toastT;function toast(t,cls){const el=document.getElementById('toast');el.textContent=t;el.className='show '+cls;clearTimeout(toastT);toastT=setTimeout(()=>el.className='',2200);}
+let shakeT=0;function shakeEngine(){shakeT=0.35;}
+
+// 点火
+let ignited=false,finished=false,ignT=0;
+document.getElementById('ignite').onclick=()=>{ignited=true;document.getElementById('ignite').style.display='none';document.getElementById('rpm').style.display='block';ignT=0;};
+
+// 计时 & 循环
+let t0=performance.now(),last=t0;
+function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
+ if(!finished)document.getElementById('time').textContent=((now-t0)/1000).toFixed(1);
+ if(!paused)beltOffset+=beltSpeed*dt;layoutBelt();
+ installed.forEach(o=>{if(o.t<1){o.t=Math.min(1,o.t+dt*4);const k=1-Math.pow(1-o.t,3);o.m.position.y=o.y0+0.6*(1-k)-(o.t<1?0:0);}});
+ let sx=0,sy=0;
+ if(shakeT>0){shakeT-=dt;sx=Math.sin(now*0.08)*0.06;}
+ if(ignited){ignT+=dt;const rpm=ignT<0.6?ignT/0.6*1500:ignT<1.6?1500-(ignT-0.6)*700:800;const r=Math.round(rpm+(ignT>1.6?Math.sin(now*0.01)*15:0));
+   document.getElementById('rpmn').textContent=r+' rpm';if(ignT>0.6)document.getElementById('rpmt').textContent='打着了！';
+   const a=ignT<0.6?0.03:0.015;sx=Math.sin(now*0.09)*a;sy=Math.cos(now*0.11)*a;}
+ engine.position.set(sx,sy,0);
+ updCam();renderer.render(scene,camera);requestAnimationFrame(loop);}
+resize();buildBelt();requestAnimationFrame(loop);
+// 测试钩子
+window.__slice={slotScreen:id=>slotScreen(SLOTS.find(s=>s.id===id)),state:()=>({doneCount,ignited})};
+</script></body></html>
