@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>发动机装回去 · 白模切片 v4</title>
+<title>发动机装回去 · 白模切片 v5.1</title>
 <style>
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 html,body{margin:0;height:100%;overflow:hidden;background:#1d2126;color:#eee;font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;touch-action:none}
@@ -206,9 +206,9 @@ function colliders(){
   }
   return list;
 }
-function resolveCollision(pos, radius){
-  // 地面
-  if(pos.y < -0.7+radius) pos.y = -0.7+radius;
+function resolveCollision(pos, radius, withGround=true){
+  // 地面（手持拖拽用；自由掉落件不要无限地板，否则掉不进虚空）
+  if(withGround && pos.y < -0.7+radius) pos.y = -0.7+radius;
   const boxes=colliders();
   for(const b of boxes){
     // 最近点
@@ -300,7 +300,7 @@ function clickSound(freq=880,dur=0.07){
   try{ if(navigator.vibrate) navigator.vibrate(28); }catch(e){}
 }
 
-// ---------- 车间料道 v5（侧视：卡竖立在滑台线上，重力朝屏幕下；一维刚体接触） ----------
+// ---------- 车间料道 v5.1（侧视：卡竖立在滑台线上，重力朝屏幕下；一维刚体接触） ----------
 const feedEl=document.getElementById('feed');
 const planeEl=document.getElementById('platform'); // 滑台（侧视薄板）
 const clipEl=document.getElementById('planeclip');
@@ -310,8 +310,9 @@ const CARD_W=60;          // 窄卡，竖立
 const CARD_H=88;
 const RAIL_Y=150;         // 滑台顶面在 feed 内的 y
 const CARD_TOP=RAIL_Y-CARD_H-50; // planeclip top=50 → 卡底边贴滑台线
-const DECEL=900;          // 低摩擦：恒定减速 px/s²
-const PUSH_DIST=CARD_W+14;// 挡板行程 ≥ 一张卡宽+间隙，推完左侧必有空位
+const DECEL=3200;         // 较高摩擦：推完几乎不靠惯性滑开
+const PUSH_DIST=CARD_W+6; // 刚好一张卡宽 + 6px 余量，够落新卡
+const PUSH_V_CAP=70;      // 限制挡板传给卡的水平冲量
 const BEAT=1.45;          // 一拍
 const PUSH_OUT=0.28, PUSH_BACK=0.24; // 推出 / 收回
 const DROP_AT=0.62;       // 推完收回后再投
@@ -400,10 +401,14 @@ function stepPhysics(dt){
       if(c.y>=0){ c.y=0; if(c.vy>220){ c.vy=-c.vy*0.18; } else { c.vy=0; c.landing=false; } }
     }
   }
-  // 挡板 → 第一张接触的卡（只在接触时传递）
+  // 挡板 → 第一张接触的卡（只在接触时传递；限制冲量，避免惯性空出过大间隙）
   for(const c of cards){
     if(c.landing && c.y<-30) continue; // 还在空中，挡板碰不到
-    if(c.x<pusherX){ c.x=pusherX; if(pusherV>0) c.vx=Math.max(c.vx,pusherV); }
+    if(c.x<pusherX){
+      c.x=pusherX;
+      if(pusherV>0) c.vx=Math.max(c.vx, Math.min(pusherV, PUSH_V_CAP));
+      else c.vx=Math.min(c.vx, PUSH_V_CAP*0.3); // 收回时把多余速度抹掉
+    }
     break;
   }
   // 卡与卡：一维刚体接触，紧贴即传递速度，绝不重叠；未接触的卡不受影响
@@ -572,8 +577,55 @@ function endDrag(cancel){
   drops++; fall(d,d.type); toast(msg+' 它稍后会从料道回来。','bad'); clearHint();
 }
 function fall(d,returnType){
-  const v=d.vel.clone(); v.y=Math.max(v.y,0.5);
-  falling.push({m:d.m, v, spin:new THREE.Vector3((Math.random()-.5)*8,(Math.random()-.5)*8,(Math.random()-.5)*8), ret:returnType});
+  const v=d.vel?d.vel.clone():new THREE.Vector3();
+  v.y=Math.max(v.y,0.5);
+  // 稍稍往镜头外甩一点，方便从发动机侧面滑落
+  if(Math.abs(v.z)<0.2) v.z += (Math.random()-.5)*0.8;
+  falling.push({
+    m:d.m, v,
+    spin:new THREE.Vector3((Math.random()-.5)*8,(Math.random()-.5)*8,(Math.random()-.5)*8),
+    ret:returnType, type:d.type,
+    r:PART_RADIUS[d.type]||0.4,
+    age:0, fade:0
+  });
+}
+/** 自由刚体 vs AABB：推出并反射速度（无无限地面） */
+function resolveFreeHit(pos, vel, radius){
+  const before=pos.clone();
+  resolveCollision(pos, radius, false);
+  const n=pos.clone().sub(before);
+  if(n.lengthSq()<1e-10) return false;
+  n.normalize();
+  const vn=vel.dot(n);
+  if(vn<0) vel.addScaledVector(n, -1.35*vn); // 弹性约 0.35
+  // 切向摩擦
+  const vn2=vel.dot(n);
+  const tang=vel.clone().addScaledVector(n, -vn2);
+  vel.copy(n.multiplyScalar(vn2)).addScaledVector(tang, 0.82);
+  return true;
+}
+/** 球-球：a 为运动体；若 bKin 则 b 视为手持（不动，只推开 a） */
+function collideBalls(aPos, aVel, aR, bPos, bVel, bR, bKin){
+  const d=aPos.clone().sub(bPos);
+  let dist=d.length();
+  const minD=aR+bR;
+  if(dist>=minD) return;
+  if(dist<1e-6){ d.set(0.01,0.2,0); dist=d.length(); }
+  const n=d.multiplyScalar(1/dist);
+  const pen=minD-dist;
+  if(bKin){
+    aPos.addScaledVector(n, pen);
+    const vn=aVel.dot(n);
+    if(vn<0) aVel.addScaledVector(n, -1.5*vn);
+    aVel.addScaledVector(n, 0.6); // 手持撞开一点
+  } else {
+    aPos.addScaledVector(n, pen*0.5);
+    bPos.addScaledVector(n, -pen*0.5);
+    const va=aVel.dot(n), vb=bVel.dot(n);
+    const exch=va-vb;
+    aVel.addScaledVector(n, -exch*0.5);
+    bVel.addScaledVector(n,  exch*0.5);
+  }
 }
 function snapIn(m,s){
   slotState[s.id].done=true;
@@ -748,13 +800,38 @@ function loop(now){
       installed(o.s);
     }
   }
+  // 掉落件：与发动机/已装件碰撞；干扰件 5 秒后淡出；真零件掉出底部才回队列
   for(let i=falling.length-1;i>=0;i--){
-    const f=falling[i]; f.v.y-=14*dt;
+    const f=falling[i];
+    f.age=(f.age||0)+dt;
+    // 干扰件兜底：5 秒后淡出消失（可被撞开，不关碰撞）
+    if(f.ret===null && f.age>=5){
+      f.fade=(f.fade||0)+dt;
+      const op=Math.max(0,1-f.fade/0.35);
+      f.m.traverse(o=>{ if(o.isMesh && o.material){ o.material.transparent=true; o.material.opacity=op; o.material.depthWrite=false; }});
+      if(f.fade>=0.35){ engine.remove(f.m); falling.splice(i,1); continue; }
+    }
+    f.v.y-=14*dt;
     f.m.position.addScaledVector(f.v,dt);
     f.m.rotation.x+=f.spin.x*dt; f.m.rotation.y+=f.spin.y*dt; f.m.rotation.z+=f.spin.z*dt;
+    resolveFreeHit(f.m.position, f.v, f.r*0.85);
+    // 与其它掉落件互撞
+    for(let j=0;j<falling.length;j++){
+      if(j===i) continue;
+      const o=falling[j];
+      collideBalls(f.m.position, f.v, f.r*0.85, o.m.position, o.v, o.r*0.85, false);
+    }
+    // 真零件：掉出画面底部才回管道；干扰件掉出则直接移除
     if(f.m.position.y<-9){
       engine.remove(f.m); falling.splice(i,1);
       if(f.ret){ const t=f.ret; setTimeout(()=>pipeQueue.push(t),1200); }
+    }
+  }
+  // 手持零件可把卡住的掉落件撞开
+  if(drag){
+    const dr=PART_RADIUS[drag.type]||0.4;
+    for(const f of falling){
+      collideBalls(f.m.position, f.v, f.r*0.85, drag.m.position, drag.vel, dr*0.85, true);
     }
   }
   let sx=0,sy=0;
@@ -791,16 +868,21 @@ window.__slice={
   slotScreen:id=>slotScreen(SLOTS.find(s=>s.id===id)),
   state:()=>({doneCount,ignited,drops,junk,queue:[...pipeQueue],belt:onPlane.map(i=>i.type),
     cards:onPlane.filter(c=>!c.falling).map(c=>({type:c.type,x:+c.x.toFixed(2),vx:+c.vx.toFixed(2),y:+c.y.toFixed(1)})),feedStarted,pusherX,fallingN:onPlane.filter(c=>c.falling).length,
-    beatT, dropDoneThisBeat, paused, demo:demo.on, hint:{...hint}, version:'v5'}),
+    beatT, dropDoneThisBeat, paused, demo:demo.on, hint:{...hint}, version:'v5.1',
+    pushDist:PUSH_DIST, cardW:CARD_W,
+    falling3d:falling.map(f=>({type:f.type,ret:f.ret,age:+(f.age||0).toFixed(2),
+      x:+f.m.position.x.toFixed(2),y:+f.m.position.y.toFixed(2),z:+f.m.position.z.toFixed(2),
+      fade:+(f.fade||0).toFixed(2)}))}),
   dragPos:()=>drag?{x:drag.m.position.x,y:drag.m.position.y,z:drag.m.position.z,type:drag.type}:null,
   setCards:(arr)=>{onPlane.forEach(c=>c.el.remove());onPlane.length=0;arr.forEach(([t,x])=>onPlane.push({type:t,x,vx:0,y:0,vy:0,el:makeCard(t),falling:false}));beatT=0;pushedThisBeat=false;dropDoneThisBeat=false;},
   forceEmptyQueue:()=>{pipeQueue.length=0;},
+  startFeed:()=>{feedStarted=true;updFeedState();},
   clearPlaneKeepOne:()=>{
     const keep=onPlane.find(c=>!c.falling);
     onPlane.slice().forEach(c=>{ if(c!==keep){ c.el.remove(); }});
     onPlane.length=0; if(keep){ keep.x=20; keep.vx=0; onPlane.push(keep);}
     pipeQueue.length=0;
   },
-  version:'v5'
+  version:'v5.1'
 };
 </script></body></html>
