@@ -22,23 +22,24 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1d2126;color:#eee;fon
 #dash span.off{background:#333;color:#555}
 #bottom{flex:none;display:flex;flex-direction:column;background:#1a1e24;border-top:2px solid #3a424c;padding-bottom:env(safe-area-inset-bottom)}
 #feedlabel{font-size:12px;color:#9aa;padding:6px 12px 0;display:flex;justify-content:space-between}
-#feed{position:relative;height:168px;margin:4px 8px 10px;overflow:hidden;background:#161a20;border:2px solid #3e4752;border-radius:8px;touch-action:none}
+#feed{position:relative;height:168px;margin:4px 8px 10px;overflow:hidden;background:#20262e;border:2px solid #3e4752;border-radius:8px;touch-action:none}
 #feed.paused{border-color:#ffd166}
-#pipe{position:absolute;left:6px;top:0;width:72px;height:44px;background:linear-gradient(180deg,#4a5562,#2f3640);border:2px solid #6a7582;border-top:none;border-radius:0 0 10px 10px;z-index:5;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;font-size:10px;color:#c8d0d8;padding-bottom:4px}
-#pipe::before{content:"";position:absolute;top:-8px;left:8px;right:8px;height:10px;background:#5a6572;border:2px solid #7a8592;border-bottom:none;border-radius:6px 6px 0 0}
+#pipe{position:absolute;left:20px;top:0;width:68px;height:30px;background:linear-gradient(90deg,#3a434e,#5a6572,#3a434e);border:2px solid #6a7582;border-top:none;z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center;font-size:10px;color:#c8d0d8}
+#pipe::after{content:"";position:absolute;left:-6px;right:-6px;bottom:-6px;height:6px;background:#6a7582;border-radius:2px}
 #pipe.spit{animation:pipeSpit .35s ease-out}
-@keyframes pipeSpit{0%{transform:translateY(0)}40%{transform:translateY(4px)}100%{transform:translateY(0)}}
-#pusher{position:absolute;left:6px;top:50px;width:16px;height:108px;background:linear-gradient(90deg,#8a94a0,#5c6570);border:2px solid #aab4c0;border-radius:4px;z-index:4;pointer-events:none;box-shadow:2px 0 6px #0006;transform:translateX(0)}
-#platform{position:absolute;left:22px;right:6px;top:54px;height:100px;background:linear-gradient(180deg,#3a424c 0%,#2a3038 18%,#252b33 100%);border:1px solid #4a5562;border-radius:3px;box-shadow:inset 0 2px 0 #555c66,0 3px 0 #1a1e24;overflow:visible;z-index:1}
-#platform::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:6px;background:#1a1e24;border-radius:0 0 3px 3px;opacity:.9}
-#planeclip{position:absolute;left:22px;right:6px;top:50px;height:108px;overflow:visible;z-index:2;pointer-events:none}
-.card{position:absolute;left:0;top:10px;width:64px;height:92px;margin:0;border-radius:8px;background:#3b424b;border:2px solid #59626d;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;font-size:10px;line-height:1.15;text-align:center;pointer-events:none;z-index:1;will-change:transform;box-shadow:0 2px 4px #0005}
-.card .ic{width:48px;height:44px;object-fit:contain;flex:none}
+@keyframes pipeSpit{0%{transform:translateY(0)}40%{transform:translateY(3px)}100%{transform:translateY(0)}}
+#pusher{position:absolute;left:4px;top:90px;width:14px;height:60px;background:#8a94a0;border:2px solid #aab4c0;border-radius:2px;z-index:4;pointer-events:none}
+#pusher::before{content:"";position:absolute;right:100%;top:24px;width:400px;height:8px;background:#56606b}
+#platform{position:absolute;left:4px;right:6px;top:150px;height:5px;background:#c8d0d8;border-radius:1px;z-index:3}
+#platform::after{content:"";position:absolute;right:0;top:5px;width:6px;height:14px;background:#8a94a0}
+#planeclip{position:absolute;left:22px;right:6px;top:50px;height:100px;overflow:visible;z-index:2;pointer-events:none}
+.card{position:absolute;left:0;top:12px;width:60px;height:88px;margin:0;box-sizing:border-box;border-radius:6px;background:#3b424b;border:2px solid #59626d;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:4px;font-size:10px;line-height:1.15;text-align:center;pointer-events:none;z-index:1;will-change:transform}
+.card .ic{width:46px;height:42px;object-fit:contain;flex:none}
 .card .nm{padding:0 2px;overflow:hidden;max-height:2.4em;word-break:break-all}
-.card.lift{top:2px;border-color:#ffd166;box-shadow:0 6px 16px #000a;z-index:6}
+.card.lift{top:0px;border-color:#ffd166;box-shadow:0 6px 16px #000a;z-index:6}
 .card.dropping{z-index:3}
 .card.fallingoff{transition:none;opacity:0}
-#smokes{position:absolute;left:18px;top:36px;width:50px;height:50px;pointer-events:none;z-index:6;overflow:visible}
+#smokes{position:absolute;left:30px;top:20px;width:50px;height:50px;pointer-events:none;z-index:6;overflow:visible}
 .puff{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border-radius:50%;background:#9aa3ad;opacity:.85;pointer-events:none;will-change:transform,opacity}
 #tip{position:fixed;z-index:8;width:220px;padding:8px 10px;border-radius:10px;background:#111e;border:1px solid #ffd166;font-size:13px;line-height:1.45;pointer-events:none;display:none}
 #tip b{color:#ffd166;font-size:15px}
@@ -299,21 +300,23 @@ function clickSound(freq=880,dur=0.07){
   try{ if(navigator.vibrate) navigator.vibrate(28); }catch(e){}
 }
 
-// ---------- 车间滑台料道（固定节拍 + 简化 2D 物理） ----------
+// ---------- 车间料道 v5（侧视：卡竖立在滑台线上，重力朝屏幕下；一维刚体接触） ----------
 const feedEl=document.getElementById('feed');
-const planeEl=document.getElementById('platform'); // 滑动平面（接住卡）
+const planeEl=document.getElementById('platform'); // 滑台（侧视薄板）
 const clipEl=document.getElementById('planeclip');
 const pusherEl=document.getElementById('pusher');
 const smokesEl=document.getElementById('smokes');
-const CARD_W=64;          // 窄卡：重叠时仍可读图标与名称
-const CARD_H=92;
-const CARD_GAP=4;         // 最小间距（排斥目标）
-const FRICTION=1.8;       // 低摩擦，缓慢减速
-const MAX_VX=420;
-const PUSH_IMPULSE=260;   // 挡板冲量
-const BEAT=1.45;          // 一拍总时长（秒）
-const PUSH_PHASE=0.38;    // 前段：挡板推出再收回
-const DROP_AT=0.55;       // 同拍内，推完后再尝试下料
+const CARD_W=60;          // 窄卡，竖立
+const CARD_H=88;
+const RAIL_Y=150;         // 滑台顶面在 feed 内的 y
+const CARD_TOP=RAIL_Y-CARD_H-50; // planeclip top=50 → 卡底边贴滑台线
+const DECEL=900;          // 低摩擦：恒定减速 px/s²
+const PUSH_DIST=CARD_W+14;// 挡板行程 ≥ 一张卡宽+间隙，推完左侧必有空位
+const BEAT=1.45;          // 一拍
+const PUSH_OUT=0.28, PUSH_BACK=0.24; // 推出 / 收回
+const DROP_AT=0.62;       // 推完收回后再投
+const G=2200;             // 屏幕向下重力
+let feedStarted=false;    // 第一次从料道拿出零件后才开始节拍
 
 const icons={};
 function iconFor(type){if(icons[type])return icons[type];
@@ -324,9 +327,9 @@ function iconFor(type){if(icons[type])return icons[type];
  icons[type]=r.domElement.toDataURL();r.dispose();return icons[type];}
 
 let pipeQueue=[], onPlane=[], paused=false;
-let beatT=0, pushAnim=0, dropDoneThisBeat=false;
+let beatT=0, pushedThisBeat=false, dropDoneThisBeat=false, pusherX=0, pusherV=0;
 
-function planeWidth(){return planeEl.clientWidth || Math.max(200, feedEl.clientWidth-28);}
+function planeWidth(){return clipEl.clientWidth || Math.max(200, feedEl.clientWidth-28);}
 function makeCard(type){
   const el=document.createElement('div'); el.className='card';
   el.innerHTML=`<img class="ic" src="${iconFor(type)}"><div class="nm">${PARTS[type].name}</div>`;
@@ -335,42 +338,32 @@ function makeCard(type){
 function initFeed(){
   clipEl.innerHTML=''; smokesEl.innerHTML='';
   pipeQueue=['plug','cam','head','wrench','plug','intake','plug','spring','belt','plug','coil','faucet','banana'];
-  onPlane=[]; beatT=0; pushAnim=0; dropDoneThisBeat=false;
+  onPlane=[]; beatT=0; pushedThisBeat=false; dropDoneThisBeat=false; pusherX=0; pusherV=0; feedStarted=false;
   pusherEl.style.transform='translateX(0)';
-  // 初始铺几张：连续坐标，略重叠可读
-  const W=planeWidth();
-  let x=10;
-  const seed=Math.min(5, pipeQueue.length);
-  for(let i=0;i<seed;i++){
+  // 初始：从挡板右侧一张卡宽处开始，等间距排开，绝不重叠
+  const W=planeWidth(); let x=PUSH_DIST;
+  while(pipeQueue.length && x+CARD_W<=W){
     const t=pipeQueue.shift();
-    onPlane.push({type:t,x,vx:0,el:makeCard(t),dropY:0,falling:false});
-    x += CARD_W*0.72;
-    if(x+CARD_W > W-8) break;
+    onPlane.push({type:t,x,vx:0,el:makeCard(t),y:0,vy:0,falling:false});
+    x+=CARD_W+6;
   }
+  renderFeed();
 }
 function activeCards(){return onPlane.filter(c=>!c.falling);}
 function spitSmoke(){
-  // 下料口空投：吐烟飘散，明确「没东西了」（管道点头由 nodPipe 负责）
-  for(let i=0;i<7;i++){
+  for(let i=0;i<8;i++){
     const d=document.createElement('div'); d.className='puff';
-    const ang=-0.6+Math.random()*1.2, sp=40+Math.random()*55;
-    const vx=Math.sin(ang)*sp, vy=20+Math.random()*40;
-    d.style.transform='translate(0,0) scale(1)';
+    const vx=-30+Math.random()*60, vy=10+Math.random()*30;
     smokesEl.appendChild(d);
-    const born=performance.now();
-    const life=480+Math.random()*280;
-    (function anim(el,vx,vy,born,life){
-      function frame(now){
-        const t=(now-born)/life;
-        if(t>=1){ el.remove(); return; }
-        const x=vx*t*0.9, y=vy*t + 30*t*t;
-        const sc=1+t*1.6, op=0.85*(1-t);
-        el.style.transform=`translate(${x}px,${y}px) scale(${sc})`;
-        el.style.opacity=String(op);
-        requestAnimationFrame(frame);
-      }
+    const born=performance.now(), life=700+Math.random()*400;
+    (function frame(now){
+      const t=(now-born)/life;
+      if(t>=1){ d.remove(); return; }
+      // 吐出后向上飘散
+      d.style.transform=`translate(${vx*t}px,${vy*t-60*t*t}px) scale(${1+t*2})`;
+      d.style.opacity=String(0.85*(1-t));
       requestAnimationFrame(frame);
-    })(d,vx,vy,born,life);
+    })(born);
   }
 }
 function nodPipe(){
@@ -378,139 +371,73 @@ function nodPipe(){
   pipe.classList.remove('spit'); void pipe.offsetWidth; pipe.classList.add('spit');
 }
 function tryDropFromPipe(){
-  // 无论有没有料，都做投放动作；没料/投不下则吐烟；节拍不停
   nodPipe();
-  if(!pipeQueue.length){ spitSmoke(); return; }
-  const cards=activeCards().sort((a,b)=>a.x-b.x);
-  let x=6;
-  if(cards.length){
-    const left=cards[0];
-    if(left.x < CARD_W*0.55){ spitSmoke(); return; }
-    x = Math.min(left.x - CARD_W*0.85, 6);
-    if(x < -CARD_W*0.2){ spitSmoke(); return; }
-  }
+  if(!pipeQueue.length){ spitSmoke(); return; }   // 只有真没料才吐烟
   const t=pipeQueue.shift();
-  const el=makeCard(t); el.classList.add('dropping');
-  onPlane.push({type:t,x,vx:0,el,dropY:-46,falling:false});
+  // 从管口竖直落下，落在挡板右侧刚腾出的空位
+  onPlane.push({type:t,x:4,vx:0,el:makeCard(t),y:-CARD_H-10,vy:0,falling:false,landing:true});
 }
-function applyPushImpulse(){
-  // 挡板向右推一下：给所有在台上的卡冲量；只剩一张也照推
-  for(const it of activeCards()){
-    // 越靠左受力越大（挡板在左端）
-    const factor = Math.max(0.35, 1 - it.x / Math.max(planeWidth(),1) * 0.55);
-    it.vx += PUSH_IMPULSE * factor;
-    if(it.vx > MAX_VX) it.vx = MAX_VX;
-  }
+function startFall(it){
+  it.falling=true; it.vy=-40; it.rot=0; it.vr=180+Math.random()*120;
+  const step=()=>{
+    const dt=0.016;
+    it.vy+=G*dt; it.y+=it.vy*dt; it.x+=it.vx*dt*0.6; it.rot+=it.vr*dt;
+    it.el.style.transform=`translate(${it.x.toFixed(1)}px,${it.y.toFixed(1)}px) rotate(${it.rot.toFixed(1)}deg)`;
+    if(it.y<260) requestAnimationFrame(step);
+    else{ it.el.remove(); const i=onPlane.indexOf(it); if(i>=0) onPlane.splice(i,1); pipeQueue.push(it.type); }
+  };
+  requestAnimationFrame(step);
 }
-function processRightFalls(){
+function stepPhysics(dt){
   const W=planeWidth();
-  for(let i=onPlane.length-1;i>=0;i--){
-    const it=onPlane[i];
-    if(it.falling) continue;
-    // 右端推出平台 → 掉下虚空
-    if(it.x + CARD_W*0.45 > W){
-      it.falling=true;
-      it.el.classList.add('fallingoff');
-      const type=it.type;
-      const el=it.el;
-      // 向下滑出动画（连续）
-      let y=it.dropY, vy=40;
-      const fallAnim=()=>{
-        y+=vy*0.016; vy+=900*0.016;
-        el.style.transform=`translate(${it.x}px, ${y}px) rotate(12deg)`;
-        el.style.opacity=String(Math.max(0,1-(y/120)));
-        if(y<140) requestAnimationFrame(fallAnim);
-        else {
-          el.remove();
-          const idx=onPlane.indexOf(it);
-          if(idx>=0) onPlane.splice(idx,1);
-          pipeQueue.push(type); // 真零件与干扰件都回管道循环（台上推掉≠扔掉）
-        }
-      };
-      requestAnimationFrame(fallAnim);
+  const cards=activeCards().sort((a,b)=>a.x-b.x);
+  for(const c of cards){
+    // 水平：低摩擦恒减速
+    if(c.vx>0){ c.vx=Math.max(0,c.vx-DECEL*dt); c.x+=c.vx*dt; }
+    // 竖直：从管口落下，落地小弹跳
+    if(c.landing){
+      c.vy+=G*dt; c.y+=c.vy*dt;
+      if(c.y>=0){ c.y=0; if(c.vy>220){ c.vy=-c.vy*0.18; } else { c.vy=0; c.landing=false; } }
     }
   }
-}
-function resolveCardPhysics(dt){
-  const cards=activeCards();
-  // 积分位置
-  for(const it of cards){
-    it.vx *= Math.max(0, 1 - FRICTION*dt);
-    if(Math.abs(it.vx)<4) it.vx=0;
-    it.x += it.vx * dt;
-    // 掉落动画（从管道落下）
-    if(it.dropY < 0){
-      it.dropY = Math.min(0, it.dropY + 280*dt);
-      if(it.dropY>=0) it.el.classList.remove('dropping');
+  // 挡板 → 第一张接触的卡（只在接触时传递）
+  for(const c of cards){
+    if(c.landing && c.y<-30) continue; // 还在空中，挡板碰不到
+    if(c.x<pusherX){ c.x=pusherX; if(pusherV>0) c.vx=Math.max(c.vx,pusherV); }
+    break;
+  }
+  // 卡与卡：一维刚体接触，紧贴即传递速度，绝不重叠；未接触的卡不受影响
+  for(let i=0;i<cards.length-1;i++){
+    const a=cards[i], b=cards[i+1];
+    if(b.x < a.x+CARD_W){
+      b.x=a.x+CARD_W;
+      if(a.vx>b.vx){ const v=(a.vx+b.vx)/2; a.vx=v; b.vx=v; } // 等质量完全非弹性
     }
   }
-  // 重叠排斥（简化：按 x 排序后两两推开）
-  cards.sort((a,b)=>a.x-b.x);
-  const minDist = CARD_W*0.62; // 允许适度重叠但不挡主体
-  for(let iter=0;iter<3;iter++){
-    for(let i=0;i<cards.length-1;i++){
-      const a=cards[i], b=cards[i+1];
-      const gap = b.x - a.x;
-      if(gap < minDist){
-        const pen = minDist - gap;
-        const push = pen * 0.5;
-        a.x -= push; b.x += push;
-        // 交换部分速度，软碰撞
-        const mv = (a.vx + b.vx)*0.5;
-        a.vx = mv - pen*8; b.vx = mv + pen*8;
-      }
-    }
-  }
-  // 左壁：挡板缩回后左缘不低于 -4
-  for(const it of cards){
-    if(it.x < -6){ it.x=-6; if(it.vx<0) it.vx*=-0.2; }
-  }
-  processRightFalls();
+  // 右端断口：重心越过台边就掉
+  for(const c of cards) if(c.x+CARD_W/2>W) startFall(c);
 }
 function stepBeat(dt){
-  // 固定节奏：一拍 = 挡板推 → 下料口尝试投放；选卡暂停整拍
-  if(paused){
-    pusherEl.style.transform='translateX(0)';
-    return;
-  }
-  beatT += dt;
-  if(beatT >= BEAT){
-    beatT -= BEAT;
-    dropDoneThisBeat=false;
-    pushAnim=0;
-  }
-  // 推阶段动画 + 冲量（每拍一次）
-  if(beatT < PUSH_PHASE){
-    const k = beatT / PUSH_PHASE;
-    // 0→1→0 推出收回
-    const travel = k<0.45 ? (k/0.45) : (1-(k-0.45)/0.55);
-    pusherEl.style.transform=`translateX(${(22*Math.max(0,travel)).toFixed(1)}px)`;
-    if(pushAnim===0){
-      pushAnim=1;
-      applyPushImpulse(); // 只剩一张也推
-    }
-  } else {
-    pusherEl.style.transform='translateX(0)';
-    if(beatT >= DROP_AT && !dropDoneThisBeat){
-      dropDoneThisBeat=true;
-      tryDropFromPipe();
-      pushAnim=0; // 为下一拍准备
-    }
-    if(beatT < DROP_AT) pushAnim=1; // 保持已推过状态直到投放
-  }
+  beatT+=dt;
+  if(beatT>=BEAT){ beatT-=BEAT; pushedThisBeat=false; dropDoneThisBeat=false; }
+  let nx=0;
+  if(beatT<PUSH_OUT){ const k=beatT/PUSH_OUT; nx=PUSH_DIST*(k*k*(3-2*k)); }
+  else if(beatT<PUSH_OUT+PUSH_BACK){ const k=(beatT-PUSH_OUT)/PUSH_BACK; nx=PUSH_DIST*(1-k*k*(3-2*k)); pushedThisBeat=true; }
+  pusherV=dt>0?(nx-pusherX)/dt:0; pusherX=nx;
+  if(beatT>=DROP_AT && !dropDoneThisBeat){ dropDoneThisBeat=true; tryDropFromPipe(); }
+}
+function renderFeed(){
+  pusherEl.style.transform=`translateX(${pusherX.toFixed(1)}px)`;
+  for(const it of onPlane){ if(it.falling) continue;
+    it.el.style.transform=`translate(${it.x.toFixed(2)}px, ${it.y.toFixed(2)}px)`; }
 }
 function stepFeed(dt){
-  stepBeat(dt);
-  resolveCardPhysics(dt);
-  // 连续插值渲染（每帧用当前 x，无跳跃瞬移）
-  for(const it of onPlane){
-    if(it.falling) continue;
-    it.el.style.transform=`translate(${it.x.toFixed(2)}px, ${it.dropY.toFixed(2)}px)`;
-  }
+  if(feedStarted && !paused){ stepBeat(dt); stepPhysics(dt); }
+  renderFeed();
 }
 function updFeedState(){
   feedEl.classList.toggle('paused', paused);
-  document.getElementById('feedstate').textContent = paused ? '⏸ 挑选中' : '▶ 运行中';
+  document.getElementById('feedstate').textContent = !feedStarted ? '■ 待机（拿出第一件后启动）' : paused ? '⏸ 挑选中' : '▶ 运行中';
 }
 
 // ---------- 选卡（炉石式） ----------
@@ -583,7 +510,7 @@ function nearestSlot(x,y,filter){
   return{s:best,d:bd};
 }
 function startDrag(it,e){
-  setLift(null); sel=null; paused=false; updFeedState();
+  setLift(null); sel=null; paused=false; if(!feedStarted){feedStarted=true;} updFeedState();
   const idx=onPlane.indexOf(it); if(idx>=0) onPlane.splice(idx,1);
   it.el.remove();
   const m=makePart(it.type);
@@ -729,7 +656,7 @@ function stepDemo(dt){
   const it=onPlane.find(i=>i.type==='head' && !i.falling);
   if(!it){ return; }
   const pr=planeEl.getBoundingClientRect();
-  const cx=pr.left+it.x+CARD_W/2, cy=pr.top+50;
+  const cr=clipEl.getBoundingClientRect(); const cx=cr.left+it.x+CARD_W/2, cy=cr.top+40;
   const tgt=slotScreen(SLOTS[0]);
   let hx,hy,lift=false,card=false;
   if(t<0.6){ hx=lerp(cx+60,cx,t/0.6); hy=lerp(cy+80,cy,t/0.6); paused=false; }
@@ -863,9 +790,10 @@ requestAnimationFrame(loop);
 window.__slice={
   slotScreen:id=>slotScreen(SLOTS.find(s=>s.id===id)),
   state:()=>({doneCount,ignited,drops,junk,queue:[...pipeQueue],belt:onPlane.map(i=>i.type),
-    cards:onPlane.filter(c=>!c.falling).map(c=>({type:c.type,x:+c.x.toFixed(2),vx:+c.vx.toFixed(2)})),
-    beatT, dropDoneThisBeat, paused, demo:demo.on, hint:{...hint}, version:'v4'}),
+    cards:onPlane.filter(c=>!c.falling).map(c=>({type:c.type,x:+c.x.toFixed(2),vx:+c.vx.toFixed(2),y:+c.y.toFixed(1)})),feedStarted,pusherX,fallingN:onPlane.filter(c=>c.falling).length,
+    beatT, dropDoneThisBeat, paused, demo:demo.on, hint:{...hint}, version:'v5'}),
   dragPos:()=>drag?{x:drag.m.position.x,y:drag.m.position.y,z:drag.m.position.z,type:drag.type}:null,
+  setCards:(arr)=>{onPlane.forEach(c=>c.el.remove());onPlane.length=0;arr.forEach(([t,x])=>onPlane.push({type:t,x,vx:0,y:0,vy:0,el:makeCard(t),falling:false}));beatT=0;pushedThisBeat=false;dropDoneThisBeat=false;},
   forceEmptyQueue:()=>{pipeQueue.length=0;},
   clearPlaneKeepOne:()=>{
     const keep=onPlane.find(c=>!c.falling);
@@ -873,6 +801,6 @@ window.__slice={
     onPlane.length=0; if(keep){ keep.x=20; keep.vx=0; onPlane.push(keep);}
     pipeQueue.length=0;
   },
-  version:'v4'
+  version:'v5'
 };
 </script></body></html>
