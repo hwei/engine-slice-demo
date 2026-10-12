@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>发动机装回去 · 白模切片 v2</title>
+<title>发动机装回去 · 白模切片 v3</title>
 <style>
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 html,body{margin:0;height:100%;overflow:hidden;background:#1d2126;color:#eee;font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;touch-action:none}
@@ -20,14 +20,20 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1d2126;color:#eee;fon
 #dash span{font-size:12px;padding:2px 5px;border-radius:4px;background:#e63946;color:#fff;transition:all .3s}
 #dash span.amber{background:#f4a259}
 #dash span.off{background:#333;color:#555}
-#bottom{flex:none;display:flex;flex-direction:column;background:#22272d;border-top:2px solid #333;padding-bottom:env(safe-area-inset-bottom)}
-#beltlabel{font-size:12px;color:#9aa;padding:6px 12px 0;display:flex;justify-content:space-between}
-#belt{position:relative;height:150px;margin:4px 0 8px;overflow:visible;background:repeating-linear-gradient(90deg,#30353c 0 22px,#2a2f35 22px 44px);border-top:3px solid #444;border-bottom:3px solid #444;touch-action:none}
-#beltclip{position:absolute;inset:0;overflow:hidden}
-#belt.paused{border-color:#ffd166}
-.card{position:absolute;left:0;top:22px;width:92px;height:104px;border-radius:10px;background:#3b424b;border:2px solid #59626d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12px;text-align:center;transition:top .12s,box-shadow .12s;pointer-events:none}
-.card .ic{width:66px;height:60px}
-.card.lift{top:2px;border-color:#ffd166;box-shadow:0 6px 16px #000a;z-index:3}
+#bottom{flex:none;display:flex;flex-direction:column;background:#1a1e24;border-top:2px solid #3a424c;padding-bottom:env(safe-area-inset-bottom)}
+#feedlabel{font-size:12px;color:#9aa;padding:6px 12px 0;display:flex;justify-content:space-between}
+#feed{position:relative;height:168px;margin:4px 8px 10px;overflow:hidden;background:linear-gradient(#252b33,#1e2329);border:2px solid #3e4752;border-radius:8px;touch-action:none}
+#feed.paused{border-color:#ffd166}
+#pipe{position:absolute;left:6px;top:0;width:78px;height:46px;background:linear-gradient(180deg,#4a5562,#2f3640);border:2px solid #6a7582;border-top:none;border-radius:0 0 10px 10px;z-index:2;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;font-size:10px;color:#c8d0d8;padding-bottom:4px}
+#pipe::before{content:"";position:absolute;top:-8px;left:8px;right:8px;height:10px;background:#5a6572;border:2px solid #7a8592;border-bottom:none;border-radius:6px 6px 0 0}
+#pusher{position:absolute;left:8px;top:52px;width:18px;height:104px;background:linear-gradient(90deg,#8a94a0,#5c6570);border:2px solid #aab4c0;border-radius:4px;z-index:3;pointer-events:none;box-shadow:2px 0 6px #0006;transform:translateX(0);transition:transform .05s linear}
+#plane{position:absolute;left:30px;right:8px;top:52px;height:104px;background:repeating-linear-gradient(90deg,#2c333c 0 16px,#262c34 16px 32px);border:1px solid #3a4450;border-radius:4px;overflow:visible}
+#planeclip{position:absolute;inset:0;overflow:hidden}
+.card{position:absolute;left:0;top:8px;width:86px;height:88px;border-radius:9px;background:#3b424b;border:2px solid #59626d;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;text-align:center;transition:top .12s,box-shadow .12s,opacity .2s;pointer-events:none;z-index:1}
+.card .ic{width:58px;height:52px}
+.card.lift{top:-6px;border-color:#ffd166;box-shadow:0 6px 16px #000a;z-index:4}
+.card.dropping{opacity:.9}
+.card.fallingoff{transition:transform .35s ease-in,opacity .35s;opacity:0}
 #tip{position:fixed;z-index:8;width:220px;padding:8px 10px;border-radius:10px;background:#111e;border:1px solid #ffd166;font-size:13px;line-height:1.45;pointer-events:none;display:none}
 #tip b{color:#ffd166;font-size:15px}
 #tip .up{color:#9aa;font-size:11px;margin-top:3px}
@@ -46,15 +52,19 @@ html,body{margin:0;height:100%;overflow:hidden;background:#1d2126;color:#eee;fon
  <div id="hud"><span>⏱ <b id="time">0.0</b>s</span><span>任务：把发动机装回去</span><span>已装 <b id="prog">0/9</b></span></div>
  <div id="view">
   <div id="toast"></div>
-  <div id="legend">单指拖动发动机画面可旋转</div>
+  <div id="legend">单指拖动发动机画面可旋转 · 料道按住挑选</div>
   <div id="dash"><span id="d1">🔋 电瓶</span><span id="d2">🛢 机油</span><span id="d3" class="amber">⚙ 发动机</span></div>
   <div id="rpm"><div class="n" id="rpmn">0 rpm</div><div class="t" id="rpmt"></div></div>
-  <div id="demoTxt">按住传送带挑零件，往上滑拿出来</div>
+  <div id="demoTxt">按住料道挑零件，往上滑拿出来</div>
   <button id="ignite">🔑 点火</button>
  </div>
  <div id="bottom">
-  <div id="beltlabel"><span>零件传送带 · 按住挑选，上滑拿出</span><span id="beltstate">▶ 运行中</span></div>
-  <div id="belt"><div id="beltclip"></div></div>
+  <div id="feedlabel"><span>车间料道 · 按住挑选，上滑拿出</span><span id="feedstate">▶ 运行中</span></div>
+  <div id="feed">
+   <div id="pipe">下料口</div>
+   <div id="pusher"></div>
+   <div id="plane"><div id="planeclip"></div></div>
+  </div>
  </div>
 </div>
 <div id="tip"></div>
@@ -106,6 +116,7 @@ const WRONG = {
  intake:'进气歧管装在后侧（进气侧），前侧是排气。',
  head:'缸盖要盖在缸体正上方。'};
 const TOTAL = SLOTS.length;
+const PART_RADIUS = {head:0.9,cam:0.45,belt:0.55,plug:0.22,coil:0.55,intake:0.55,wrench:0.4,spring:0.35,faucet:0.35,banana:0.35};
 
 // ---------- Three 场景 ----------
 const view=document.getElementById('view');
@@ -126,11 +137,22 @@ for(let i=0;i<4;i++){const b=cyl(0.33,0.02,'#555'); b.position.set(-1.2+0.8*i,0.
 const pan=box(3.3,0.4,1.4,'#7d838b'); pan.position.y=-0.7; engine.add(pan);
 const crank=cyl(0.32,0.15,'#666'); crank.rotation.z=Math.PI/2; crank.position.set(1.88,-0.2,-0.2); engine.add(crank);
 const markCrank=box(0.04,0.08,0.06,'#444'); markCrank.position.set(1.97,0.12,-0.2); engine.add(markCrank);
-const exh=new THREE.Group(); for(let i=0;i<4;i++){const p=box(0.2,0.2,0.5,'#8a5a3c');p.position.set(-1.2+0.8*i,1.15,1.05);exh.add(p);} const ec=box(2.8,0.25,0.25,'#8a5a3c');ec.position.set(0,0.85,1.3);exh.add(ec);
-const tail=cyl(0.13,0.9,'#6d4a33');tail.rotation.z=Math.PI/2;tail.position.set(-1.85,0.85,1.3);exh.add(tail); engine.add(exh);
-const TAIL_END=new THREE.Vector3(-2.35,0.85,1.3);
-function label(txt,pos,col='#ffffff'){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.font='bold 30px sans-serif';g.fillStyle=col;g.textAlign='center';g.fillText(txt,128,42);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.renderOrder=10;s.scale.set(1.4,0.35,1);s.position.set(...pos);scene.add(s);return s;}
-label('排气侧',[0,0.4,2.0],'#e0a070');label('进气侧',[0,0.4,-2.0],'#8fb0e0');label('正时端',[2.9,0.6,-0.2],'#ffd166');
+// 排气：贴在缸体前侧（+Z），低于缸盖安装面，避免穿模
+const exh=new THREE.Group();
+for(let i=0;i<4;i++){
+  const p=box(0.22,0.22,0.55,'#8a5a3c');
+  p.position.set(-1.2+0.8*i,0.48,1.12); // 更靠前、更低，避免与缸盖轮廓糊在一起
+  exh.add(p);
+}
+const ec=box(2.8,0.28,0.28,'#8a5a3c'); ec.position.set(0,0.4,1.35); exh.add(ec);
+const tail=cyl(0.14,0.7,'#6d4a33'); tail.rotation.z=Math.PI/2; tail.position.set(-1.7,0.4,1.35); exh.add(tail);
+engine.add(exh);
+// 烟源放在默认视角可见的排气口前方
+const TAIL_END=new THREE.Vector3(-1.4,0.55,1.7);
+function label(txt,pos,col='#ffffff',sc=1.2){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.font='bold 30px sans-serif';g.fillStyle=col;g.textAlign='center';g.fillText(txt,128,42);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.renderOrder=10;s.scale.set(sc,sc*0.25,1);s.position.set(...pos);scene.add(s);return s;}
+label('排气侧',[0,0.15,2.1],'#e0a070',1.3);label('进气侧',[0,0.15,-2.1],'#8fb0e0',1.3);
+// 「正时」缩短并内移，避免右缘裁切
+label('正时',[2.15,0.1,0.55],'#ffd166',1.0);
 
 function makePart(type){const g=new THREE.Group();
  switch(type){
@@ -146,24 +168,135 @@ function makePart(type){const g=new THREE.Group();
   case 'banana':{const m=new THREE.Mesh(new THREE.TorusGeometry(0.4,0.1,8,16,Math.PI*0.8),mat('#f3d34a'));g.add(m);break;}
  } return g;}
 
-// 幽灵高亮
+// ---------- 碰撞体（AABB 近似，随已装零件扩展） ----------
+function worldAABB(mesh){
+  const b=new THREE.Box3().setFromObject(mesh);
+  return b;
+}
+function colliders(){
+  const list=[];
+  // 缸体 + 油底壳
+  list.push(new THREE.Box3(new THREE.Vector3(-1.85,-0.95,-0.85),new THREE.Vector3(1.85,0.92,0.85)));
+  // 排气
+  list.push(new THREE.Box3(new THREE.Vector3(-2.1,0.2,0.85),new THREE.Vector3(1.5,0.75,1.55)));
+  // 曲轴皮带轮
+  list.push(new THREE.Box3(new THREE.Vector3(1.7,-0.45,-0.45),new THREE.Vector3(2.1,0.05,0.05)));
+  // 已装零件
+  for(const s of SLOTS){
+    if(!slotState[s.id].done) continue;
+    const g=ghosts[s.id]; // use installed mesh if tracked
+    if(installedMeshes[s.id]){
+      list.push(new THREE.Box3().setFromObject(installedMeshes[s.id]));
+    } else {
+      // fallback approximate
+      const p=s.pos, r=PART_RADIUS[s.part]||0.4;
+      list.push(new THREE.Box3(
+        new THREE.Vector3(p[0]-r,p[1]-r,p[2]-r),
+        new THREE.Vector3(p[0]+r,p[1]+r,p[2]+r)));
+    }
+  }
+  return list;
+}
+function resolveCollision(pos, radius){
+  // 地面
+  if(pos.y < -0.7+radius) pos.y = -0.7+radius;
+  const boxes=colliders();
+  for(const b of boxes){
+    // 最近点
+    const cx=Math.max(b.min.x, Math.min(pos.x, b.max.x));
+    const cy=Math.max(b.min.y, Math.min(pos.y, b.max.y));
+    const cz=Math.max(b.min.z, Math.min(pos.z, b.max.z));
+    let dx=pos.x-cx, dy=pos.y-cy, dz=pos.z-cz;
+    let d2=dx*dx+dy*dy+dz*dz;
+    if(d2 < 1e-8){
+      // 中心在盒子内：沿最小穿透轴推出
+      const pxL=pos.x-b.min.x, pxR=b.max.x-pos.x;
+      const pyL=pos.y-b.min.y, pyR=b.max.y-pos.y;
+      const pzL=pos.z-b.min.z, pzR=b.max.z-pos.z;
+      const m=Math.min(pxL,pxR,pyL,pyR,pzL,pzR);
+      if(m===pxL) pos.x=b.min.x-radius;
+      else if(m===pxR) pos.x=b.max.x+radius;
+      else if(m===pyL) pos.y=b.min.y-radius;
+      else if(m===pyR) pos.y=b.max.y+radius;
+      else if(m===pzL) pos.z=b.min.z-radius;
+      else pos.z=b.max.z+radius;
+    } else if(d2 < radius*radius){
+      const d=Math.sqrt(d2);
+      const k=(radius-d)/d;
+      pos.x+=dx*k; pos.y+=dy*k; pos.z+=dz*k;
+    }
+  }
+  return pos;
+}
+
+// 幽灵高亮（常驻暗轮廓）
 let slotState={}; SLOTS.forEach(s=>slotState[s.id]={done:false});
 const ghosts={};
-SLOTS.forEach(s=>{const m=makePart(s.part);m.traverse(o=>{if(o.isMesh)o.material=new THREE.MeshBasicMaterial({color:'#6bdc8b',transparent:true,opacity:0.3,depthWrite:false});});m.position.set(...s.pos);m.visible=false;engine.add(m);ghosts[s.id]=m;});
+const installedMeshes={};
+SLOTS.forEach(s=>{
+  const m=makePart(s.part);
+  m.traverse(o=>{if(o.isMesh)o.material=new THREE.MeshBasicMaterial({color:'#7a9a80',transparent:true,opacity:0.16,depthWrite:false,depthTest:false});});
+  m.position.set(...s.pos); m.visible=false; engine.add(m); ghosts[s.id]=m;
+});
 const unlocked=s=>s.needs.every(n=>slotState[n].done);
 function setGhost(id,col,op){ghosts[id].traverse(o=>{if(o.isMesh){o.material.color.set(col);o.material.opacity=op;}});}
 
-// 相机（只保留单指旋转）
-let cam={th:0.75,ph:0.95,r:9.5},camT={...cam};
-function updCam(){for(const k in cam)cam[k]+=(camT[k]-cam[k])*0.15;camera.position.set(cam.r*Math.sin(cam.ph)*Math.sin(cam.th),0.6+cam.r*Math.cos(cam.ph),cam.r*Math.sin(cam.ph)*Math.cos(cam.th));camera.lookAt(0,0.6,0);}
+// 延迟闪烁提示
+const HINT_DELAY=3.0;
+let hint={type:null,t:0};
+function resetHint(type){
+  if(hint.type!==type){hint.type=type;hint.t=0;}
+}
+function clearHint(){hint.type=null;hint.t=0;}
+function updateGhostVisuals(now, dragHot){
+  for(const s of SLOTS){
+    const g=ghosts[s.id];
+    if(slotState[s.id].done){g.visible=false;continue;}
+    if(!unlocked(s)){g.visible=false;continue;}
+    g.visible=true;
+    // 拖拽靠近时的磁吸高亮优先
+    if(dragHot && dragHot.id===s.id){
+      setGhost(s.id,'#9effb8',0.45); continue;
+    }
+    // 犹豫够久才闪烁对应零件的轮廓
+    if(hint.type===s.part && hint.t>=HINT_DELAY){
+      const pulse=0.22+0.35*(0.5+0.5*Math.sin(now*0.012));
+      setGhost(s.id,'#6bdc8b',pulse);
+    } else {
+      setGhost(s.id,'#7a9a80',0.14);
+    }
+  }
+}
+
+// 相机（只保留单指旋转）；略偏排气侧，方便看见点火冒烟
+let cam={th:0.55,ph:0.95,r:9.8},camT={...cam};
+function updCam(){for(const k in cam)cam[k]+=(camT[k]-cam[k])*0.15;camera.position.set(cam.r*Math.sin(cam.ph)*Math.sin(cam.th),0.6+cam.r*Math.cos(cam.ph),cam.r*Math.sin(cam.ph)*Math.cos(cam.th));camera.lookAt(0,0.55,0.15);}
 function resize(){const w=view.clientWidth,h=view.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<h?50:40;camera.updateProjectionMatrix();}
 addEventListener('resize',resize);
 let orbit=null;
 view.addEventListener('pointerdown',e=>{if(e.target!==renderer.domElement||ignited||drag)return;orbit={x:e.clientX,y:e.clientY,id:e.pointerId};});
 
-// ---------- 传送带：队列 + 补位 ----------
-const beltEl=document.getElementById('belt'),clipEl=document.getElementById('beltclip');
-const CARD_W=104, SPEED=38, CATCH=320;
+// ---------- 音效 ----------
+let audioCtx=null;
+function clickSound(freq=880,dur=0.07){
+  try{
+    if(!audioCtx) audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type='square'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+  try{ if(navigator.vibrate) navigator.vibrate(28); }catch(e){}
+}
+
+// ---------- 推币机式料道 ----------
+const feedEl=document.getElementById('feed');
+const planeEl=document.getElementById('plane');
+const clipEl=document.getElementById('planeclip');
+const pusherEl=document.getElementById('pusher');
+const CARD_W=94;
 const icons={};
 function iconFor(type){if(icons[type])return icons[type];
  const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r.setSize(132,120);
@@ -171,172 +304,469 @@ function iconFor(type){if(icons[type])return icons[type];
  const m=makePart(type);s.add(m);const bb=new THREE.Box3().setFromObject(m);const size=bb.getSize(new THREE.Vector3()).length();const c=bb.getCenter(new THREE.Vector3());m.position.sub(c);
  const cm=new THREE.PerspectiveCamera(35,132/120,0.1,100);cm.position.set(size*0.9,size*0.7,size*1.2);cm.lookAt(0,0,0);r.render(s,cm);
  icons[type]=r.domElement.toDataURL();r.dispose();return icons[type];}
-// 初始顺序：缸盖排第一（示范手用它），约 3~4 张真件夹一张干扰件
-let queue, onBelt, paused=false;
-function initBelt(){clipEl.innerHTML='';
- queue=['plug','cam','head','wrench','plug','intake','plug','spring','belt','plug','coil','faucet','banana'];
- onBelt=[];
- const W=beltWidth();let x=W-CARD_W*0.6;while(queue.length&&x>-CARD_W){const t=queue.shift();onBelt.push({type:t,x,el:makeCard(t)});x-=CARD_W;}
- // 让缸盖在可见区
- }
-function makeCard(type){const el=document.createElement('div');el.className='card';el.innerHTML=`<img class="ic" src="${iconFor(type)}"><div>${PARTS[type].name}</div>`;clipEl.appendChild(el);return el;}
-function spawnFromQueue(){const t=queue.shift();const last=onBelt[onBelt.length-1];const x=last?Math.min(-CARD_W,last.x-CARD_W):-CARD_W;onBelt.push({type:t,x,el:makeCard(t)});}
-function beltWidth(){return beltEl.clientWidth;}
-function stepBelt(dt){const W=beltWidth();
- if(!paused){
-  for(let i=0;i<onBelt.length;i++){const it=onBelt[i];let nx=it.x+SPEED*dt;
-   if(i>0){const lim=onBelt[i-1].x-CARD_W; if(lim-nx>0.5)nx=Math.min(lim,it.x+(SPEED+CATCH)*dt); else nx=Math.min(nx,lim);}
-   it.x=nx;}
-  // 从出口离开的卡回到队尾（循环）
-  while(onBelt.length&&onBelt[0].x>W){const it=onBelt.shift();it.el.remove();queue.push(it.type);}
-  // 入口有空位就补
-  while(queue.length&&(!onBelt.length||onBelt[onBelt.length-1].x>=4))spawnFromQueue();
- }
- onBelt.forEach(it=>it.el.style.transform=`translateX(${it.x+6}px)`);}
+
+let pipeQueue=[], onPlane=[], paused=false;
+let pushTimer=0, dropCooldown=0, rightDropDelay=0;
+const PUSH_INTERVAL=2.4, PUSH_DIST=48, FULL_COUNT=4;
+
+function planeWidth(){return planeEl.clientWidth;}
+function makeCard(type){
+  const el=document.createElement('div'); el.className='card';
+  el.innerHTML=`<img class="ic" src="${iconFor(type)}"><div>${PARTS[type].name}</div>`;
+  clipEl.appendChild(el); return el;
+}
+function initFeed(){
+  clipEl.innerHTML='';
+  pipeQueue=['plug','cam','head','wrench','plug','intake','plug','spring','belt','plug','coil','faucet','banana'];
+  onPlane=[];
+  // 先往平面上铺几张
+  const W=planeWidth()||300;
+  let x=12;
+  while(pipeQueue.length && x+CARD_W < W-10){
+    const t=pipeQueue.shift();
+    onPlane.push({type:t,x,el:makeCard(t),vy:0,dropY:0});
+    x+=CARD_W;
+  }
+}
+function leftHasGap(){
+  if(!onPlane.length) return true;
+  // 最左卡的左缘若离开料口落点区，视为有空缺
+  const leftmost=onPlane.reduce((a,b)=>a.x<b.x?a:b);
+  return leftmost.x > 28;
+}
+function countOnPlane(){return onPlane.filter(c=>!c.falling).length;}
+function dropFromPipe(){
+  if(!pipeQueue.length || dropCooldown>0) return;
+  if(!leftHasGap() && countOnPlane()>=FULL_COUNT) return;
+  const t=pipeQueue.shift();
+  // 落到左端空缺处：找最左可用 x
+  let x=8;
+  const sorted=[...onPlane].filter(c=>!c.falling).sort((a,b)=>a.x-b.x);
+  if(sorted.length && sorted[0].x < CARD_W+16){
+    // 挤在已有卡左边一点点（若仍有缝）
+    x=Math.max(4, sorted[0].x - CARD_W);
+    if(x < 4 && sorted[0].x < 20) return; // 真的没缝
+  }
+  const el=makeCard(t); el.classList.add('dropping');
+  const it={type:t,x,el,vy:0,dropY:-40};
+  onPlane.push(it);
+  dropCooldown=0.35;
+}
+function doPush(){
+  // 挡板动画
+  pusherEl.style.transform='translateX(22px)';
+  setTimeout(()=>{pusherEl.style.transform='translateX(0)';},180);
+  for(const it of onPlane){
+    if(it.falling) continue;
+    it.x += PUSH_DIST;
+  }
+  // 右侧掉落：超出平面的卡离开
+  rightDropDelay = 0.15;
+}
+function processRightDrops(){
+  const W=planeWidth();
+  for(let i=onPlane.length-1;i>=0;i--){
+    const it=onPlane[i];
+    if(it.falling) continue;
+    if(it.x + CARD_W*0.55 > W){
+      it.falling=true;
+      it.el.classList.add('fallingoff');
+      const type=it.type;
+      setTimeout(()=>{
+        it.el.remove();
+        const idx=onPlane.indexOf(it);
+        if(idx>=0) onPlane.splice(idx,1);
+        // 循环回管道
+        pipeQueue.push(type);
+      },380);
+    }
+  }
+}
+function stepFeed(dt){
+  if(!paused){
+    pushTimer += dt;
+    dropCooldown = Math.max(0, dropCooldown-dt);
+    if(rightDropDelay>0){
+      rightDropDelay -= dt;
+      if(rightDropDelay<=0) processRightDrops();
+    }
+    // 平面较满时推；或定时推
+    const full = countOnPlane() >= FULL_COUNT;
+    if(pushTimer >= (full ? PUSH_INTERVAL*0.75 : PUSH_INTERVAL*1.15)){
+      pushTimer=0;
+      if(countOnPlane()>=2) doPush();
+    }
+    // 有空缺则下料（中间空缺不立刻把右侧挤满——我们不做自动左移）
+    if(leftHasGap()) dropFromPipe();
+    // 掉落动画
+    for(const it of onPlane){
+      if(it.dropY < 0){
+        it.dropY = Math.min(0, it.dropY + 220*dt);
+      }
+    }
+  }
+  // 渲染位置
+  for(const it of onPlane){
+    if(it.falling) continue;
+    it.el.style.transform=`translate(${it.x}px, ${it.dropY}px)`;
+  }
+}
+function updFeedState(){
+  feedEl.classList.toggle('paused', paused);
+  document.getElementById('feedstate').textContent = paused ? '⏸ 挑选中' : '▶ 运行中';
+}
 
 // ---------- 选卡（炉石式） ----------
 const tipEl=document.getElementById('tip');
-let sel=null; // {id, liftIt}
-function cardAt(x){const r=beltEl.getBoundingClientRect();let best=null,bd=1e9;onBelt.forEach(it=>{const cx=r.left+it.x+6+46;const d=Math.abs(cx-x);if(d<bd&&cx>r.left-20&&cx<r.right+20){bd=d;best=it;}});return bd<70?best:null;}
-function setLift(it){if(sel.lift===it)return;if(sel.lift)sel.lift.el.classList.remove('lift');sel.lift=it;
- if(it){it.el.classList.add('lift');const p=PARTS[it.type];tipEl.innerHTML=`<b>${p.name}</b><br>${p.desc}<div class="up">↑ 往上滑拿出来</div>`;tipEl.style.display='block';
-  const r=it.el.getBoundingClientRect(),br=beltEl.getBoundingClientRect();const tw=220;let lx=r.left+r.width/2-tw/2;lx=Math.max(8,Math.min(innerWidth-tw-8,lx));tipEl.style.left=lx+'px';tipEl.style.top=(br.top-tipEl.offsetHeight-6)+'px';}
- else tipEl.style.display='none';}
-function updBeltState(){beltEl.classList.toggle('paused',paused);document.getElementById('beltstate').textContent=paused?'⏸ 挑选中':'▶ 运行中';}
-beltEl.addEventListener('pointerdown',e=>{if(ignited||drag||sel)return;e.preventDefault();paused=true;updBeltState();sel={id:e.pointerId,lift:null};setLift(cardAt(e.clientX));});
+let sel=null;
+function cardAt(x){
+  const r=planeEl.getBoundingClientRect();
+  let best=null, bd=1e9;
+  onPlane.forEach(it=>{
+    if(it.falling) return;
+    const cx=r.left+it.x+CARD_W/2;
+    const d=Math.abs(cx-x);
+    if(d<bd && cx>r.left-20 && cx<r.right+20){bd=d;best=it;}
+  });
+  return bd<70?best:null;
+}
+function setLift(it){
+  if(sel && sel.lift===it) return;
+  if(sel && sel.lift) sel.lift.el.classList.remove('lift');
+  if(sel) sel.lift=it;
+  if(it){
+    it.el.classList.add('lift');
+    const p=PARTS[it.type];
+    tipEl.innerHTML=`<b>${p.name}</b><br>${p.desc}<div class="up">↑ 往上滑拿出来</div>`;
+    tipEl.style.display='block';
+    const r=it.el.getBoundingClientRect(), br=feedEl.getBoundingClientRect();
+    const tw=220; let lx=r.left+r.width/2-tw/2;
+    lx=Math.max(8,Math.min(innerWidth-tw-8,lx));
+    tipEl.style.left=lx+'px'; tipEl.style.top=(br.top-tipEl.offsetHeight-6)+'px';
+    // 摸卡开始犹豫计时，但不立刻高亮轮廓
+    resetHint(it.type);
+  } else {
+    tipEl.style.display='none';
+    if(!drag) clearHint();
+  }
+}
+feedEl.addEventListener('pointerdown',e=>{
+  if(ignited||drag||sel) return;
+  e.preventDefault();
+  paused=true; updFeedState();
+  sel={id:e.pointerId, lift:null};
+  setLift(cardAt(e.clientX));
+});
 
 // ---------- 3D 拖拽 ----------
-let drag=null; const LIFT=60, SNAP=56;
-const ray=new THREE.Raycaster(), plane=new THREE.Plane(), tmpV=new THREE.Vector3();
-function screenTo3D(x,y){const r=renderer.domElement.getBoundingClientRect();const n=new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);ray.setFromCamera(n,camera);
- camera.getWorldDirection(tmpV);plane.setFromNormalAndCoplanarPoint(tmpV.clone().negate(),new THREE.Vector3(0,1.1,0));const out=new THREE.Vector3();ray.ray.intersectPlane(plane,out);return out||new THREE.Vector3(0,1,0);}
-function slotScreen(s){const v=new THREE.Vector3(...s.pos).add(engine.position).project(camera);const r=renderer.domElement.getBoundingClientRect();return{x:r.left+(v.x+1)/2*r.width,y:r.top+(1-v.y)/2*r.height};}
-function nearestSlot(x,y,filter){let best=null,bd=1e9;SLOTS.forEach(s=>{if(!filter(s))return;const p=slotScreen(s);const d=Math.hypot(p.x-x,p.y-y);if(d<bd){bd=d;best=s;}});return{s:best,d:bd};}
+let drag=null; const LIFT=60, SNAP=56, SNAP_AUTO=34;
+const ray=new THREE.Raycaster(), plane3=new THREE.Plane(), tmpV=new THREE.Vector3();
+function screenTo3D(x,y){
+  const r=renderer.domElement.getBoundingClientRect();
+  const n=new THREE.Vector2((x-r.left)/r.width*2-1,-(y-r.top)/r.height*2+1);
+  ray.setFromCamera(n,camera);
+  camera.getWorldDirection(tmpV);
+  plane3.setFromNormalAndCoplanarPoint(tmpV.clone().negate(), new THREE.Vector3(0,1.1,0));
+  const out=new THREE.Vector3();
+  if(!ray.ray.intersectPlane(plane3,out)) return new THREE.Vector3(0,1,0);
+  return out;
+}
+function slotScreen(s){
+  const v=new THREE.Vector3(...s.pos).project(camera);
+  const r=renderer.domElement.getBoundingClientRect();
+  return{x:r.left+(v.x+1)/2*r.width, y:r.top+(1-v.y)/2*r.height};
+}
+function nearestSlot(x,y,filter){
+  let best=null, bd=1e9;
+  SLOTS.forEach(s=>{
+    if(!filter(s)) return;
+    const p=slotScreen(s); const d=Math.hypot(p.x-x,p.y-y);
+    if(d<bd){bd=d;best=s;}
+  });
+  return{s:best,d:bd};
+}
 function startDrag(it,e){
- setLift(null);sel=null;paused=false;updBeltState();
- onBelt.splice(onBelt.indexOf(it),1);it.el.remove();
- const m=makePart(it.type);const p=screenTo3D(e.clientX,e.clientY-LIFT);m.position.copy(p);m.scale.setScalar(0.4);engine.add(m);
- drag={type:it.type,m,x:e.clientX,y:e.clientY-LIFT,fy:e.clientY,vel:new THREE.Vector3(),hot:null};
- SLOTS.forEach(s=>{if(s.part===it.type&&!slotState[s.id].done){ghosts[s.id].visible=true;setGhost(s.id,unlocked(s)?'#6bdc8b':'#ff9f43',0.25);}});
- if(it.type==='belt')showMarks(true);}
+  setLift(null); sel=null; paused=false; updFeedState();
+  const idx=onPlane.indexOf(it); if(idx>=0) onPlane.splice(idx,1);
+  it.el.remove();
+  const m=makePart(it.type);
+  const p=screenTo3D(e.clientX, e.clientY-LIFT);
+  m.position.copy(p); m.scale.setScalar(0.4);
+  engine.add(m);
+  drag={type:it.type, m, x:e.clientX, y:e.clientY-LIFT, fy:e.clientY, vel:new THREE.Vector3(), hot:null, snapHold:0};
+  resetHint(it.type);
+  if(it.type==='belt') showMarks(true);
+}
 addEventListener('pointermove',e=>{
- if(demo.on)return;
- if(sel&&e.pointerId===sel.id){const br=beltEl.getBoundingClientRect();
-  if(e.clientY<br.top-28&&sel.lift){startDrag(sel.lift,e);}
-  else if(e.clientY>br.top-28)setLift(cardAt(e.clientX));}
- if(drag){drag.x=e.clientX;drag.y=e.clientY-LIFT;drag.fy=e.clientY;}
- if(orbit&&e.pointerId===orbit.id){camT.th-=(e.clientX-orbit.x)*0.01;camT.ph=Math.min(1.45,Math.max(0.3,camT.ph-(e.clientY-orbit.y)*0.008));orbit.x=e.clientX;orbit.y=e.clientY;}
+  if(demo.on) return;
+  if(sel && e.pointerId===sel.id){
+    const br=feedEl.getBoundingClientRect();
+    if(e.clientY < br.top-28 && sel.lift){ startDrag(sel.lift,e); }
+    else if(e.clientY > br.top-28){
+      const c=cardAt(e.clientX);
+      if(c !== (sel.lift||null)){ /* 换卡重置犹豫 */ if(c) resetHint(c.type); else if(!c) clearHint(); }
+      setLift(c);
+    }
+  }
+  if(drag){ drag.x=e.clientX; drag.y=e.clientY-LIFT; drag.fy=e.clientY; }
+  if(orbit && e.pointerId===orbit.id){
+    camT.th -= (e.clientX-orbit.x)*0.01;
+    camT.ph = Math.min(1.45, Math.max(0.3, camT.ph-(e.clientY-orbit.y)*0.008));
+    orbit.x=e.clientX; orbit.y=e.clientY;
+  }
 });
 function release(e,cancel){
- if(orbit&&(!e||e.pointerId===orbit.id))orbit=null;
- if(sel&&(!e||e.pointerId===sel.id)){setLift(null);sel=null;paused=false;updBeltState();}
- if(drag)endDrag(cancel);}
+  if(orbit && (!e||e.pointerId===orbit.id)) orbit=null;
+  if(sel && (!e||e.pointerId===sel.id)){ setLift(null); sel=null; paused=false; updFeedState(); }
+  if(drag) endDrag(cancel);
+}
 addEventListener('pointerup',e=>release(e,false));
 addEventListener('pointercancel',e=>release(e,true));
 
-function clearGhosts(){Object.values(ghosts).forEach(g=>g.visible=false);showMarks(false);}
-function hotSlot(){return nearestSlot(drag.x,drag.y,s=>s.part===drag.type&&!slotState[s.id].done&&unlocked(s));}
+function hotSlot(){ return nearestSlot(drag.x, drag.y, s=>s.part===drag.type && !slotState[s.id].done && unlocked(s)); }
 let drops=0, junk=0;
 const falling=[], snapping=[];
-function endDrag(cancel){const d=drag;drag=null;clearGhosts();
- const br=beltEl.getBoundingClientRect();
- // 松手在传送带上：当作放回（不算失误）
- if(!cancel&&d.fy>br.top-10&&!PARTS[d.type].fake){engine.remove(d.m);queue.unshift(d.type);return;}
- if(PARTS[d.type].fake){junk++;fall(d,null);toast(PARTS[d.type].quip,'info');return;}
- const good=hotSlot.call(null,drag=d);drag=null;
- if(!cancel&&good.s&&good.d<SNAP){snapIn(d.m,good.s);return;}
- let msg;
- const locked=nearestSlot(d.x,d.y,s=>s.part===d.type&&!slotState[s.id].done&&!unlocked(s));
- const other=nearestSlot(d.x,d.y,s=>s.part!==d.type);
- if(locked.s&&locked.d<SNAP)msg='🔒 '+NEED_TXT[d.type];
- else if(other.s&&other.d<SNAP*0.9&&other.d<(good.s?good.d:1e9))msg='放错位置了：'+WRONG[d.type];
- else if(good.s&&good.d<SNAP*2.6)msg='没装到位，再靠近点（对准发绿光的位置）。';
- else msg='没装上，掉下去了。拿起零件时，发绿光的地方就是它的位置。';
- drops++;fall(d,d.type);toast(msg+' 它稍后会从传送带回来。','bad');}
-function fall(d,returnType){const v=d.vel.clone();v.y=Math.max(v.y,0.5);falling.push({m:d.m,v,spin:new THREE.Vector3((Math.random()-.5)*8,(Math.random()-.5)*8,(Math.random()-.5)*8),ret:returnType});}
-function snapIn(m,s){slotState[s.id].done=true;snapping.push({m,s,from:m.position.clone(),r0:m.rotation.clone(),sc:m.scale.x,t:0});}
-let doneCount=0,finished=false;
-function installed(s){doneCount++;document.getElementById('prog').textContent=doneCount+'/'+TOTAL;
- toast(`咔哒 ✔ ${PARTS[s.part].name} 装好了${s.part==='belt'?'（正时记号已对齐）':''}`,'good');
- if(doneCount===TOTAL){finished=true;endT=performance.now();document.getElementById('time').textContent=((endT-(t0??endT))/1000).toFixed(1);toast('全部装好！拧钥匙试试','good');document.getElementById('ignite').style.display='block';}}
+
+function endDrag(cancel){
+  const d=drag; drag=null; showMarks(false);
+  const br=feedEl.getBoundingClientRect();
+  // 松手放回料道
+  if(!cancel && d.fy > br.top-10 && !PARTS[d.type].fake){
+    engine.remove(d.m); pipeQueue.unshift(d.type); clearHint(); return;
+  }
+  if(PARTS[d.type].fake){ junk++; fall(d,null); toast(PARTS[d.type].quip,'info'); clearHint(); return; }
+  // 只有未吸附成功才掉落（吸附成功已在 loop 里免松手安装）
+  const good=nearestSlot(d.x,d.y,s=>s.part===d.type&&!slotState[s.id].done&&unlocked(s));
+  if(!cancel && good.s && good.d < SNAP){ snapIn(d.m, good.s); return; }
+  let msg;
+  const locked=nearestSlot(d.x,d.y,s=>s.part===d.type&&!slotState[s.id].done&&!unlocked(s));
+  const other=nearestSlot(d.x,d.y,s=>s.part!==d.type);
+  if(locked.s&&locked.d<SNAP) msg='🔒 '+NEED_TXT[d.type];
+  else if(other.s&&other.d<SNAP*0.9&&other.d<(good.s?good.d:1e9)) msg='放错位置了：'+WRONG[d.type];
+  else if(good.s&&good.d<SNAP*2.6) msg='没装到位，再靠近点（对着轮廓影子）。';
+  else msg='没装上，掉下去了。半透明轮廓就是可装位置。';
+  drops++; fall(d,d.type); toast(msg+' 它稍后会从料道回来。','bad'); clearHint();
+}
+function fall(d,returnType){
+  const v=d.vel.clone(); v.y=Math.max(v.y,0.5);
+  falling.push({m:d.m, v, spin:new THREE.Vector3((Math.random()-.5)*8,(Math.random()-.5)*8,(Math.random()-.5)*8), ret:returnType});
+}
+function snapIn(m,s){
+  slotState[s.id].done=true;
+  clearHint();
+  showMarks(false);
+  clickSound(980,0.08);
+  setTimeout(()=>clickSound(620,0.05),60);
+  snapping.push({m,s,from:m.position.clone(),r0:m.rotation.clone(),sc:m.scale.x,t:0});
+}
+let doneCount=0, finished=false;
+function installed(s){
+  doneCount++;
+  document.getElementById('prog').textContent=doneCount+'/'+TOTAL;
+  // installedMeshes 已在 snapping 完成时写入
+  toast(`咔哒 ✔ ${PARTS[s.part].name} 装好了${s.part==='belt'?'（正时记号已对齐）':''}`,'good');
+  if(doneCount===TOTAL){
+    finished=true; endT=performance.now();
+    document.getElementById('time').textContent=((endT-(t0??endT))/1000).toFixed(1);
+    toast('全部装好！拧钥匙试试','good');
+    document.getElementById('ignite').style.display='block';
+  }
+}
 
 // 正时记号
-const camMarkGlow=new THREE.Mesh(new THREE.SphereGeometry(0.09),new THREE.MeshBasicMaterial({color:'#ffd166'}));camMarkGlow.position.set(1.97,1.62,-0.2);camMarkGlow.visible=false;engine.add(camMarkGlow);
-const crankMarkGlow=camMarkGlow.clone();crankMarkGlow.material=camMarkGlow.material.clone();crankMarkGlow.position.set(1.97,0.12,-0.2);engine.add(crankMarkGlow);
-function showMarks(v){camMarkGlow.visible=crankMarkGlow.visible=v;if(v)toast('正时记号亮了：把皮带对准两个黄点','info');}
+const camMarkGlow=new THREE.Mesh(new THREE.SphereGeometry(0.09),new THREE.MeshBasicMaterial({color:'#ffd166'}));
+camMarkGlow.position.set(1.97,1.62,-0.2); camMarkGlow.visible=false; engine.add(camMarkGlow);
+const crankMarkGlow=camMarkGlow.clone(); crankMarkGlow.material=camMarkGlow.material.clone();
+crankMarkGlow.position.set(1.97,0.12,-0.2); engine.add(crankMarkGlow);
+function showMarks(v){camMarkGlow.visible=crankMarkGlow.visible=v; if(v) toast('正时记号亮了：把皮带对准两个黄点','info');}
 function markAlign(ok){[camMarkGlow,crankMarkGlow].forEach(m=>m.material.color.set(ok?'#6bdc8b':'#ffd166'));}
 
-let toastT;function toast(t,cls){const el=document.getElementById('toast');el.textContent=t;el.className='show '+cls;clearTimeout(toastT);toastT=setTimeout(()=>el.className='',2600);}
+let toastT; function toast(t,cls){const el=document.getElementById('toast');el.textContent=t;el.className='show '+cls;clearTimeout(toastT);toastT=setTimeout(()=>el.className='',2600);}
 
 // ---------- 点火 ----------
-let ignited=false,ignT=0,puffed=false,resultShown=false;const smoke=[];
-document.getElementById('ignite').onclick=()=>{ignited=true;clearTimeout(toastT);document.getElementById('toast').className='';document.getElementById('ignite').style.display='none';document.getElementById('rpm').style.display='block';document.getElementById('dash').style.display='flex';ignT=0;};
-function puff(){for(let i=0;i<14;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.18,10,8),new THREE.MeshBasicMaterial({color:'#9a9a9a',transparent:true,opacity:0.7,depthWrite:false}));m.position.copy(TAIL_END);scene.add(m);smoke.push({m,v:new THREE.Vector3(-1.2-Math.random()*1.2,0.6+Math.random()*1.0,(Math.random()-.5)*0.8),t:0,life:1.4+Math.random()*0.8});}}
-function title(sec,dr){if(dr===0&&sec<=60)return['专业技师','零失误，手比说明书还快。'];if(dr<=2&&sec<=120)return['熟手','手已经熟了，再快一点、少掉一次试试。'];return['学徒','多拆装几次，零件位置就记住了。'];}
-function showResult(){resultShown=true;const sec=(endT-(t0??endT))/1000;const [tt,note]=title(sec,drops);
- document.getElementById('rTitle').textContent=tt;document.getElementById('rTime').textContent=sec.toFixed(1)+' 秒';
- document.getElementById('rDrops').textContent=drops+' 次';document.getElementById('rJunk').textContent=junk+' 件';document.getElementById('rNote').textContent=note+'（专业技师：60 秒内且零掉落）';
- document.getElementById('result').style.display='flex';}
+let ignited=false,ignT=0,puffed=false,resultShown=false; const smoke=[];
+document.getElementById('ignite').onclick=()=>{
+  ignited=true; clearTimeout(toastT); document.getElementById('toast').className='';
+  document.getElementById('ignite').style.display='none';
+  document.getElementById('rpm').style.display='block';
+  document.getElementById('dash').style.display='flex'; ignT=0;
+};
+function puff(){
+  for(let i=0;i<16;i++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.18,10,8),new THREE.MeshBasicMaterial({color:'#9a9a9a',transparent:true,opacity:0.7,depthWrite:false}));
+    m.position.copy(TAIL_END); scene.add(m);
+    // 主要朝镜头前方 / 上方冒，保证默认视角看得见
+    smoke.push({m, v:new THREE.Vector3(-0.3+Math.random()*0.6, 0.7+Math.random()*1.1, 0.9+Math.random()*1.0), t:0, life:1.4+Math.random()*0.8});
+  }
+}
+function title(sec,dr){
+  if(dr===0&&sec<=60) return['专业技师','零失误，手比说明书还快。'];
+  if(dr<=2&&sec<=120) return['熟手','手已经熟了，再快一点、少掉一次试试。'];
+  return['学徒','多拆装几次，零件位置就记住了。'];
+}
+function showResult(){
+  resultShown=true; const sec=(endT-(t0??endT))/1000; const [tt,note]=title(sec,drops);
+  document.getElementById('rTitle').textContent=tt;
+  document.getElementById('rTime').textContent=sec.toFixed(1)+' 秒';
+  document.getElementById('rDrops').textContent=drops+' 次';
+  document.getElementById('rJunk').textContent=junk+' 件';
+  document.getElementById('rNote').textContent=note+'（专业技师：60 秒内且零掉落）';
+  document.getElementById('result').style.display='flex';
+}
 document.getElementById('again').onclick=()=>{sessionStorage.setItem('skipDemo','1');location.reload();};
 
 // ---------- 开局示范手 ----------
-const handEl=document.getElementById('hand'),demoCard=document.getElementById('demoCard'),demoTxt=document.getElementById('demoTxt');
-const demo={on:!sessionStorage.getItem('skipDemo'),t:0};
+const handEl=document.getElementById('hand'), demoCard=document.getElementById('demoCard'), demoTxt=document.getElementById('demoTxt');
+const demo={on:!sessionStorage.getItem('skipDemo'), t:0};
 sessionStorage.removeItem('skipDemo');
-function stopDemo(){if(!demo.on)return;demo.on=false;handEl.style.display=demoCard.style.display=demoTxt.style.display='none';if(demo.lift)demo.lift.el.classList.remove('lift');tipEl.style.display='none';paused=false;updBeltState();}
-addEventListener('pointerdown',e=>{if(demo.on){stopDemo();}if(t0===null)t0=performance.now();},true);
+function stopDemo(){
+  if(!demo.on) return; demo.on=false;
+  handEl.style.display=demoCard.style.display=demoTxt.style.display='none';
+  if(demo.lift) demo.lift.el.classList.remove('lift');
+  tipEl.style.display='none'; paused=false; updFeedState();
+}
+addEventListener('pointerdown',e=>{if(demo.on) stopDemo(); if(t0===null) t0=performance.now();}, true);
 function lerp(a,b,k){return a+(b-a)*k;}
-function stepDemo(dt){demo.t=(demo.t+dt)%3.6;const t=demo.t;
- const it=onBelt.find(i=>i.type==='head');const br=beltEl.getBoundingClientRect();
- if(!it){return;}
- const cx=br.left+it.x+52,cy=br.top+70;const tgt=slotScreen(SLOTS[0]);
- let hx,hy,lift=false,card=false;
- if(t<0.6){hx=lerp(cx+60,cx,t/0.6);hy=lerp(cy+80,cy,t/0.6);paused=false;}
- else if(t<1.2){hx=cx;hy=cy;lift=true;paused=true;}
- else if(t<2.6){const k=(t-1.2)/1.4,e=k*k*(3-2*k);hx=lerp(cx,tgt.x,e);hy=lerp(cy,tgt.y+LIFT,e);lift=k<0.25;card=k>=0.25;paused=true;}
- else{hx=tgt.x;hy=tgt.y+LIFT;card=true;paused=true;}
- updBeltState();
- handEl.style.display='block';handEl.style.left=hx+'px';handEl.style.top=hy+'px';
- if(lift){if(demo.lift!==it){demo.lift=it;}it.el.classList.add('lift');}else it.el.classList.remove('lift');
- if(card){demoCard.src=iconFor('head');demoCard.style.display='block';demoCard.style.left=hx+'px';demoCard.style.top=(hy-LIFT)+'px';}else demoCard.style.display='none';
- demoTxt.style.display='block';}
+function stepDemo(dt){
+  demo.t=(demo.t+dt)%3.6; const t=demo.t;
+  const it=onPlane.find(i=>i.type==='head' && !i.falling);
+  if(!it){ return; }
+  const pr=planeEl.getBoundingClientRect();
+  const cx=pr.left+it.x+CARD_W/2, cy=pr.top+50;
+  const tgt=slotScreen(SLOTS[0]);
+  let hx,hy,lift=false,card=false;
+  if(t<0.6){ hx=lerp(cx+60,cx,t/0.6); hy=lerp(cy+80,cy,t/0.6); paused=false; }
+  else if(t<1.2){ hx=cx; hy=cy; lift=true; paused=true; }
+  else if(t<2.6){ const k=(t-1.2)/1.4,e=k*k*(3-2*k); hx=lerp(cx,tgt.x,e); hy=lerp(cy,tgt.y+LIFT,e); lift=k<0.25; card=k>=0.25; paused=true; }
+  else{ hx=tgt.x; hy=tgt.y+LIFT; card=true; paused=true; }
+  updFeedState();
+  handEl.style.display='block'; handEl.style.left=hx+'px'; handEl.style.top=hy+'px';
+  if(lift){ demo.lift=it; it.el.classList.add('lift'); } else it.el.classList.remove('lift');
+  if(card){ demoCard.src=iconFor('head'); demoCard.style.display='block'; demoCard.style.left=hx+'px'; demoCard.style.top=(hy-LIFT)+'px'; }
+  else demoCard.style.display='none';
+  demoTxt.style.display='block';
+}
 
 // ---------- 主循环 ----------
-let t0=null,endT=0,last=performance.now();
-const _q=new THREE.Quaternion();
-function loop(now){const dt=Math.min(0.05,(now-last)/1000);last=now;
- if(t0!==null&&!finished)document.getElementById('time').textContent=((now-t0)/1000).toFixed(1);
- stepBelt(dt);
- if(demo.on)stepDemo(dt);
- // 拖拽：滞后跟随 + 摆动 + 吸附
- if(drag){const h=hotSlot();let tgt=screenTo3D(drag.x,drag.y);
-  SLOTS.forEach(s=>{if(ghosts[s.id].visible&&unlocked(s))setGhost(s.id,'#6bdc8b',0.25);});
-  drag.hot=null;
-  if(h.s&&h.d<SNAP*1.6){const k=Math.max(0,1-h.d/(SNAP*1.6));tgt.lerp(new THREE.Vector3(...h.s.pos),0.15+0.35*k);setGhost(h.s.id,'#9effb8',0.3+0.25*k);drag.hot=h.s;}
-  if(drag.type==='belt')markAlign(h.s&&h.d<SNAP);
-  const m=drag.m;const prev=m.position.clone();m.position.lerp(tgt,1-Math.pow(0.0005,dt));drag.vel.copy(m.position).sub(prev).divideScalar(Math.max(dt,1e-3));
-  m.scale.setScalar(lerp(m.scale.x,1,1-Math.pow(0.001,dt)));
-  m.rotation.z=lerp(m.rotation.z,THREE.MathUtils.clamp(-drag.vel.x*0.04,-0.5,0.5),0.2);m.rotation.x=lerp(m.rotation.x,THREE.MathUtils.clamp(drag.vel.y*0.04,-0.5,0.5),0.2);}
- for(let i=snapping.length-1;i>=0;i--){const o=snapping[i];o.t=Math.min(1,o.t+dt*6);const k=1-Math.pow(1-o.t,3);o.m.position.lerpVectors(o.from,new THREE.Vector3(...o.s.pos),k);o.m.rotation.set(o.r0.x*(1-k),o.r0.y*(1-k),o.r0.z*(1-k));o.m.scale.setScalar(lerp(o.sc,1,k));
-  if(o.t>=1){shakeT=0.12;snapping.splice(i,1);installed(o.s);}}
- for(let i=falling.length-1;i>=0;i--){const f=falling[i];f.v.y-=14*dt;f.m.position.addScaledVector(f.v,dt);f.m.rotation.x+=f.spin.x*dt;f.m.rotation.y+=f.spin.y*dt;f.m.rotation.z+=f.spin.z*dt;
-  if(f.m.position.y<-9){engine.remove(f.m);falling.splice(i,1);if(f.ret){const t=f.ret;setTimeout(()=>queue.push(t),1200);}}}
- let sx=0,sy=0;
- if(shakeT>0){shakeT-=dt;sx=Math.sin(now*0.08)*0.04;}
- if(ignited){ignT+=dt;
-  const rpm=ignT<0.7?ignT/0.7*300:ignT<1.2?300+(ignT-0.7)/0.5*1300:ignT<2.2?1600-(ignT-1.2)*800:800;
-  const r=Math.round(rpm+(ignT>2.2?Math.sin(now*0.01)*15:0));
-  document.getElementById('rpmn').textContent=r+' rpm';
-  document.getElementById('rpmt').textContent=ignT<0.7?'起动机转动……':ignT>1.0?'打着了！':'';
-  if(ignT>1.0&&!puffed){puffed=true;puff();['d1','d2','d3'].forEach((id,j)=>setTimeout(()=>document.getElementById(id).classList.add('off'),j*180));}
-  const a=ignT<0.7?0.02:ignT<1.4?0.035:0.014;sx=Math.sin(now*0.09)*a;sy=Math.cos(now*0.11)*a;
-  if(ignT>3.4&&!resultShown)showResult();}
- for(let i=smoke.length-1;i>=0;i--){const s=smoke[i];s.t+=dt;s.m.position.addScaledVector(s.v,dt);s.v.multiplyScalar(0.97);s.m.scale.setScalar(1+s.t*2.2);s.m.material.opacity=0.7*Math.max(0,1-s.t/s.life);if(s.t>s.life){scene.remove(s.m);smoke.splice(i,1);}}
- engine.position.set(sx,sy,0);
- updCam();renderer.render(scene,camera);requestAnimationFrame(loop);}
-let shakeT=0;
-initBelt();resize();
-if(!demo.on)updBeltState();
+let t0=null, endT=0, last=performance.now(), shakeT=0;
+function tryAutoInstall(){
+  if(!drag || PARTS[drag.type].fake) return false;
+  const h=hotSlot();
+  if(h.s && h.d < SNAP_AUTO){
+    // 吸稳即装，无需松手
+    const m=drag.m, s=h.s;
+    drag=null;
+    snapIn(m,s);
+    return true;
+  }
+  return false;
+}
+function loop(now){
+  const dt=Math.min(0.05,(now-last)/1000); last=now;
+  if(t0!==null && !finished) document.getElementById('time').textContent=((now-t0)/1000).toFixed(1);
+  stepFeed(dt);
+  if(demo.on) stepDemo(dt);
+
+  // 犹豫计时
+  if(hint.type && (sel||drag)) hint.t += dt;
+  else if(!hint.type) hint.t=0;
+
+  let dragHot=null;
+  if(drag){
+    const h=hotSlot();
+    let tgt=screenTo3D(drag.x, drag.y);
+    drag.hot=null;
+    if(h.s && h.d < SNAP*1.6){
+      const k=Math.max(0,1-h.d/(SNAP*1.6));
+      tgt.lerp(new THREE.Vector3(...h.s.pos), 0.18+0.4*k);
+      drag.hot=h.s; dragHot=h.s;
+      if(h.d < SNAP_AUTO) drag.snapHold = (drag.snapHold||0)+dt;
+      else drag.snapHold=0;
+    } else drag.snapHold=0;
+    if(drag.type==='belt') markAlign(h.s && h.d<SNAP);
+
+    // 碰撞：不能穿进发动机
+    const radius=PART_RADIUS[drag.type]||0.4;
+    // 磁吸很近时允许进入槽位（不碰撞挡掉）
+    const nearSnap = h.s && h.d < SNAP;
+    if(!nearSnap) resolveCollision(tgt, radius*0.85);
+
+    const m=drag.m;
+    const prev=m.position.clone();
+    m.position.lerp(tgt, 1-Math.pow(0.0005,dt));
+    // 再做一次碰撞修正（跟随后）
+    if(!nearSnap){
+      resolveCollision(m.position, radius*0.85);
+    }
+    drag.vel.copy(m.position).sub(prev).divideScalar(Math.max(dt,1e-3));
+    m.scale.setScalar(lerp(m.scale.x,1,1-Math.pow(0.001,dt)));
+    m.rotation.z=lerp(m.rotation.z, THREE.MathUtils.clamp(-drag.vel.x*0.04,-0.5,0.5),0.2);
+    m.rotation.x=lerp(m.rotation.x, THREE.MathUtils.clamp(drag.vel.y*0.04,-0.5,0.5),0.2);
+
+    // 吸稳免松手安装
+    if(drag.snapHold > 0.05 || (h.s && h.d < SNAP_AUTO*0.65)){
+      tryAutoInstall();
+    }
+  }
+
+  updateGhostVisuals(now, dragHot);
+
+  for(let i=snapping.length-1;i>=0;i--){
+    const o=snapping[i]; o.t=Math.min(1,o.t+dt*6);
+    const k=1-Math.pow(1-o.t,3);
+    o.m.position.lerpVectors(o.from, new THREE.Vector3(...o.s.pos), k);
+    o.m.rotation.set(o.r0.x*(1-k), o.r0.y*(1-k), o.r0.z*(1-k));
+    o.m.scale.setScalar(lerp(o.sc,1,k));
+    if(o.t>=1){
+      shakeT=0.12;
+      installedMeshes[o.s.id]=o.m;
+      snapping.splice(i,1);
+      installed(o.s);
+    }
+  }
+  for(let i=falling.length-1;i>=0;i--){
+    const f=falling[i]; f.v.y-=14*dt;
+    f.m.position.addScaledVector(f.v,dt);
+    f.m.rotation.x+=f.spin.x*dt; f.m.rotation.y+=f.spin.y*dt; f.m.rotation.z+=f.spin.z*dt;
+    if(f.m.position.y<-9){
+      engine.remove(f.m); falling.splice(i,1);
+      if(f.ret){ const t=f.ret; setTimeout(()=>pipeQueue.push(t),1200); }
+    }
+  }
+  let sx=0,sy=0;
+  if(shakeT>0){ shakeT-=dt; sx=Math.sin(now*0.08)*0.04; }
+  if(ignited){
+    ignT+=dt;
+    const rpm=ignT<0.7?ignT/0.7*300:ignT<1.2?300+(ignT-0.7)/0.5*1300:ignT<2.2?1600-(ignT-1.2)*800:800;
+    const r=Math.round(rpm+(ignT>2.2?Math.sin(now*0.01)*15:0));
+    document.getElementById('rpmn').textContent=r+' rpm';
+    document.getElementById('rpmt').textContent=ignT<0.7?'起动机转动……':ignT>1.0?'打着了！':'';
+    if(ignT>1.0&&!puffed){
+      puffed=true; puff();
+      ['d1','d2','d3'].forEach((id,j)=>setTimeout(()=>document.getElementById(id).classList.add('off'),j*180));
+    }
+    const a=ignT<0.7?0.02:ignT<1.4?0.035:0.014;
+    sx=Math.sin(now*0.09)*a; sy=Math.cos(now*0.11)*a;
+    if(ignT>3.4&&!resultShown) showResult();
+  }
+  for(let i=smoke.length-1;i>=0;i--){
+    const s=smoke[i]; s.t+=dt;
+    s.m.position.addScaledVector(s.v,dt); s.v.multiplyScalar(0.97);
+    s.m.scale.setScalar(1+s.t*2.2);
+    s.m.material.opacity=0.7*Math.max(0,1-s.t/s.life);
+    if(s.t>s.life){ scene.remove(s.m); smoke.splice(i,1); }
+  }
+  engine.position.set(sx,sy,0);
+  updCam(); renderer.render(scene,camera); requestAnimationFrame(loop);
+}
+
+initFeed(); resize();
+if(!demo.on) updFeedState();
 requestAnimationFrame(loop);
-window.__slice={slotScreen:id=>slotScreen(SLOTS.find(s=>s.id===id)),state:()=>({doneCount,ignited,drops,junk,queue:[...queue],belt:onBelt.map(i=>i.type),demo:demo.on})};
+window.__slice={
+  slotScreen:id=>slotScreen(SLOTS.find(s=>s.id===id)),
+  state:()=>({doneCount,ignited,drops,junk,queue:[...pipeQueue],belt:onPlane.map(i=>i.type),demo:demo.on,hint:{...hint},paused}),
+  dragPos:()=>drag?{x:drag.m.position.x,y:drag.m.position.y,z:drag.m.position.z,type:drag.type}:null,
+  version:'v3'
+};
 </script></body></html>
