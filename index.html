@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>发动机装回去 · 白模切片 v5.1</title>
+<title>发动机装回去 · 白模切片 v5.2</title>
 <style>
 *{box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 html,body{margin:0;height:100%;overflow:hidden;background:#1d2126;color:#eee;font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;touch-action:none}
@@ -300,7 +300,7 @@ function clickSound(freq=880,dur=0.07){
   try{ if(navigator.vibrate) navigator.vibrate(28); }catch(e){}
 }
 
-// ---------- 车间料道 v5.1（侧视：卡竖立在滑台线上，重力朝屏幕下；一维刚体接触） ----------
+// ---------- 车间料道 v5.2（侧视：卡竖立在滑台线上，重力朝屏幕下；一维刚体接触） ----------
 const feedEl=document.getElementById('feed');
 const planeEl=document.getElementById('platform'); // 滑台（侧视薄板）
 const clipEl=document.getElementById('planeclip');
@@ -662,7 +662,8 @@ let toastT; function toast(t,cls){const el=document.getElementById('toast');el.t
 // ---------- 点火 ----------
 let ignited=false,ignT=0,puffed=false,resultShown=false; const smoke=[];
 document.getElementById('ignite').onclick=()=>{
-  ignited=true; clearTimeout(toastT); document.getElementById('toast').className='';
+  ignited=true; clearTimeout(toastT);
+  for(const f of falling) engine.remove(f.m); falling.length=0; // 点火前清场 document.getElementById('toast').className='';
   document.getElementById('ignite').style.display='none';
   document.getElementById('rpm').style.display='block';
   document.getElementById('dash').style.display='flex'; ignT=0;
@@ -804,17 +805,18 @@ function loop(now){
   for(let i=falling.length-1;i>=0;i--){
     const f=falling[i];
     f.age=(f.age||0)+dt;
-    // 干扰件兜底：5 秒后淡出消失（可被撞开，不关碰撞）
-    if(f.ret===null && f.age>=5){
+    // v5.2 兜底：任何未吸附松手件，从松手起 5 秒淡出（不判静止）；真零件回管道队尾
+    if(f.age>=5){
       f.fade=(f.fade||0)+dt;
       const op=Math.max(0,1-f.fade/0.35);
       f.m.traverse(o=>{ if(o.isMesh && o.material){ o.material.transparent=true; o.material.opacity=op; o.material.depthWrite=false; }});
-      if(f.fade>=0.35){ engine.remove(f.m); falling.splice(i,1); continue; }
+      if(f.fade>=0.35){ engine.remove(f.m); falling.splice(i,1); if(f.ret){ const t=f.ret; setTimeout(()=>pipeQueue.push(t),1200); } continue; }
     }
     f.v.y-=14*dt;
     f.m.position.addScaledVector(f.v,dt);
+    f.spin.multiplyScalar(Math.exp(-1.2*dt)); // 空气角阻尼
     f.m.rotation.x+=f.spin.x*dt; f.m.rotation.y+=f.spin.y*dt; f.m.rotation.z+=f.spin.z*dt;
-    resolveFreeHit(f.m.position, f.v, f.r*0.85);
+    if(resolveFreeHit(f.m.position, f.v, f.r*0.85)){ f.spin.multiplyScalar(Math.exp(-8*dt)); f.v.x*=0.97; f.v.z*=0.97; } // 接触摩擦衰减
     // 与其它掉落件互撞
     for(let j=0;j<falling.length;j++){
       if(j===i) continue;
@@ -868,13 +870,18 @@ window.__slice={
   slotScreen:id=>slotScreen(SLOTS.find(s=>s.id===id)),
   state:()=>({doneCount,ignited,drops,junk,queue:[...pipeQueue],belt:onPlane.map(i=>i.type),
     cards:onPlane.filter(c=>!c.falling).map(c=>({type:c.type,x:+c.x.toFixed(2),vx:+c.vx.toFixed(2),y:+c.y.toFixed(1)})),feedStarted,pusherX,fallingN:onPlane.filter(c=>c.falling).length,
-    beatT, dropDoneThisBeat, paused, demo:demo.on, hint:{...hint}, version:'v5.1',
+    beatT, dropDoneThisBeat, paused, demo:demo.on, hint:{...hint}, version:'v5.2',
     pushDist:PUSH_DIST, cardW:CARD_W,
     falling3d:falling.map(f=>({type:f.type,ret:f.ret,age:+(f.age||0).toFixed(2),
       x:+f.m.position.x.toFixed(2),y:+f.m.position.y.toFixed(2),z:+f.m.position.z.toFixed(2),
       fade:+(f.fade||0).toFixed(2)}))}),
   dragPos:()=>drag?{x:drag.m.position.x,y:drag.m.position.y,z:drag.m.position.z,type:drag.type}:null,
   setCards:(arr)=>{onPlane.forEach(c=>c.el.remove());onPlane.length=0;arr.forEach(([t,x])=>onPlane.push({type:t,x,vx:0,y:0,vy:0,el:makeCard(t),falling:false}));beatT=0;pushedThisBeat=false;dropDoneThisBeat=false;},
+  // 测试钩子：把最新掉落件放到发动机顶面并给高自旋，复现「卡住旋转」
+  wedgeLast:()=>{const f=falling[falling.length-1]; if(!f) return null; const bx=colliders(); let top=bx[0];
+    for(const b of bx){ if(b.max.y>top.max.y) top=b; }
+    f.m.position.set((top.min.x+top.max.x)/2, top.max.y+f.r*0.85, (top.min.z+top.max.z)/2); f.v.set(0,0,0); f.spin.set(9,9,9); return f.m.position.toArray();},
+  spinOf:()=>falling.map(f=>+f.spin.length().toFixed(2)),
   forceEmptyQueue:()=>{pipeQueue.length=0;},
   startFeed:()=>{feedStarted=true;updFeedState();},
   clearPlaneKeepOne:()=>{
@@ -883,6 +890,6 @@ window.__slice={
     onPlane.length=0; if(keep){ keep.x=20; keep.vx=0; onPlane.push(keep);}
     pipeQueue.length=0;
   },
-  version:'v5.1'
+  version:'v5.2'
 };
 </script></body></html>
